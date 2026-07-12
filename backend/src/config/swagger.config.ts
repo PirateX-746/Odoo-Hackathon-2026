@@ -21,6 +21,8 @@ export function buildOpenApiDocument(app: INestApplication): OpenAPIObject {
     .addTag('Expenses')
     .addTag('Reports')
     .addTag('Dashboard')
+    .addTag('Insights')
+    .addTag('Dispatch Assistant')
     .build();
 
   return SwaggerModule.createDocument(app, config);
