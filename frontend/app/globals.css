@@ -5,17 +5,6 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --animate-gauge-in: gauge-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
-  @keyframes gauge-in {
-    from {
-      opacity: 0;
-      transform: translateY(6px) scaleX(0.85);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0) scaleX(1);
-    }
-  }
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
@@ -51,7 +40,7 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  /* Signal colors — road/dispatch semantics, constant across themes */
+  /* Signal colors — status semantics (available/warn/critical/idle), constant across themes */
   --color-signal-ok: var(--signal-ok);
   --color-signal-ok-foreground: var(--signal-ok-foreground);
   --color-signal-warn: var(--signal-warn);
@@ -60,135 +49,146 @@
   --color-signal-critical-foreground: var(--signal-critical-foreground);
   --color-signal-idle: var(--signal-idle);
   --color-signal-idle-foreground: var(--signal-idle-foreground);
-  --radius-sm: calc(var(--radius) * 0.5);
-  --radius-md: calc(var(--radius) * 0.75);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.5);
-  --radius-2xl: calc(var(--radius) * 2);
-  --radius-3xl: calc(var(--radius) * 2.5);
-  --radius-4xl: calc(var(--radius) * 3);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
+/* Stock shadcn "neutral" palette (oklch) — dark is the default theme, .light is opt-in. */
 :root {
-  /* Brand palette: Luster White / Aster Flower Blue / Habañero /
-     Jodhpur Tan / Deep Space Royal / Deadly Depths (default = dark theme) */
-  --background: #111144; /* Deadly Depths */
-  --foreground: #f4f1ec; /* Luster White */
-  --card: #223382; /* Deep Space Royal */
-  --card-foreground: #f4f1ec;
-  --popover: #223382;
-  --popover-foreground: #f4f1ec;
-  --primary: #f98513; /* Habañero */
-  --primary-foreground: #111144;
-  --secondary: #223382;
-  --secondary-foreground: #f4f1ec;
-  --muted: #223382;
-  --muted-foreground: #9bacd8; /* Aster Flower Blue */
-  --accent: #223382;
-  --accent-foreground: #f4f1ec;
-  --destructive: #d6453f;
-  --destructive-foreground: #fff5f5;
-  --border: #2a3b78;
-  --input: #2a3b78;
-  --ring: #f98513;
-  --chart-1: #f98513;
-  --chart-2: #3fb950;
-  --chart-3: #d6453f;
-  --chart-4: #9bacd8;
-  --chart-5: #dad1c8;
-  --radius: 0.25rem;
-  --sidebar: #0c0c3a;
-  --sidebar-foreground: #f4f1ec;
-  --sidebar-primary: #f98513;
-  --sidebar-primary-foreground: #111144;
-  --sidebar-accent: #223382;
-  --sidebar-accent-foreground: #f4f1ec;
-  --sidebar-border: #232b6e;
-  --sidebar-ring: #f98513;
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.439 0 0);
 
-  /* Signal colors — status semantics, same in both themes. Green/red are
-     supplements to the brand palette (it has no success/error hues); warn
-     and idle reuse Habañero and Aster Flower Blue to stay on-palette. */
-  --signal-ok: #3fb950;
-  --signal-ok-foreground: #04170a;
-  --signal-warn: #f98513;
-  --signal-warn-foreground: #111144;
-  --signal-critical: #d6453f;
-  --signal-critical-foreground: #fff5f5;
-  --signal-idle: #9bacd8;
-  --signal-idle-foreground: #111144;
+  /* Signal colors — status semantics, same in both themes (green/amber/red/gray). */
+  --signal-ok: oklch(0.696 0.17 162.48);
+  --signal-ok-foreground: oklch(0.145 0 0);
+  --signal-warn: oklch(0.769 0.188 70.08);
+  --signal-warn-foreground: oklch(0.145 0 0);
+  --signal-critical: oklch(0.704 0.191 22.216);
+  --signal-critical-foreground: oklch(0.985 0 0);
+  --signal-idle: oklch(0.708 0 0);
+  --signal-idle-foreground: oklch(0.145 0 0);
 }
 
 .dark {
-  /* Same brand palette — this app is dark-mode-first */
-  --background: #111144;
-  --foreground: #f4f1ec;
-  --card: #223382;
-  --card-foreground: #f4f1ec;
-  --popover: #223382;
-  --popover-foreground: #f4f1ec;
-  --primary: #f98513;
-  --primary-foreground: #111144;
-  --secondary: #223382;
-  --secondary-foreground: #f4f1ec;
-  --muted: #223382;
-  --muted-foreground: #9bacd8;
-  --accent: #223382;
-  --accent-foreground: #f4f1ec;
-  --destructive: #d6453f;
-  --destructive-foreground: #fff5f5;
-  --border: #2a3b78;
-  --input: #2a3b78;
-  --ring: #f98513;
-  --chart-1: #f98513;
-  --chart-2: #3fb950;
-  --chart-3: #d6453f;
-  --chart-4: #9bacd8;
-  --chart-5: #dad1c8;
-  --sidebar: #0c0c3a;
-  --sidebar-foreground: #f4f1ec;
-  --sidebar-primary: #f98513;
-  --sidebar-primary-foreground: #111144;
-  --sidebar-accent: #223382;
-  --sidebar-accent-foreground: #f4f1ec;
-  --sidebar-border: #232b6e;
-  --sidebar-ring: #f98513;
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.439 0 0);
+
+  --signal-ok: oklch(0.696 0.17 162.48);
+  --signal-ok-foreground: oklch(0.145 0 0);
+  --signal-warn: oklch(0.769 0.188 70.08);
+  --signal-warn-foreground: oklch(0.145 0 0);
+  --signal-critical: oklch(0.704 0.191 22.216);
+  --signal-critical-foreground: oklch(0.985 0 0);
+  --signal-idle: oklch(0.708 0 0);
+  --signal-idle-foreground: oklch(0.145 0 0);
 }
 
-/* Light theme is opt-in via .light on <html> — dark is the default */
+/* Light theme is opt-in via .light on <html> — dark is the default. */
 .light {
-  --background: #f4f1ec; /* Luster White */
-  --foreground: #111144; /* Deadly Depths */
-  --card: #ffffff;
-  --card-foreground: #111144;
-  --popover: #ffffff;
-  --popover-foreground: #111144;
-  --primary: #f98513; /* Habañero */
-  --primary-foreground: #111144;
-  --secondary: #dad1c8; /* Jodhpur Tan */
-  --secondary-foreground: #111144;
-  --muted: #dad1c8;
-  --muted-foreground: #223382; /* Deep Space Royal */
-  --accent: #dad1c8;
-  --accent-foreground: #111144;
-  --destructive: #c53a34;
-  --destructive-foreground: #ffffff;
-  --border: #dad1c8;
-  --input: #dad1c8;
-  --ring: #f98513;
-  --chart-1: #f98513;
-  --chart-2: #2f9e4f;
-  --chart-3: #c53a34;
-  --chart-4: #223382;
-  --chart-5: #9bacd8;
-  --sidebar: #ffffff;
-  --sidebar-foreground: #111144;
-  --sidebar-primary: #f98513;
-  --sidebar-primary-foreground: #111144;
-  --sidebar-accent: #dad1c8;
-  --sidebar-accent-foreground: #111144;
-  --sidebar-border: #dad1c8;
-  --sidebar-ring: #f98513;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+
+  --signal-ok: oklch(0.6 0.118 184.704);
+  --signal-ok-foreground: oklch(0.985 0 0);
+  --signal-warn: oklch(0.646 0.222 41.116);
+  --signal-warn-foreground: oklch(0.985 0 0);
+  --signal-critical: oklch(0.577 0.245 27.325);
+  --signal-critical-foreground: oklch(0.985 0 0);
+  --signal-idle: oklch(0.556 0 0);
+  --signal-idle-foreground: oklch(0.985 0 0);
 }
 
 @layer base {
@@ -201,18 +201,4 @@
   html {
     @apply font-sans;
   }
-}
-
-/* Gauge tick-mark underline used by the dashboard KPI tiles (signature element) */
-@utility gauge-ticks {
-  background-image: repeating-linear-gradient(
-    90deg,
-    var(--color-primary) 0,
-    var(--color-primary) 2px,
-    transparent 2px,
-    transparent 8px
-  );
-  background-position: bottom left;
-  background-size: 100% 2px;
-  background-repeat: repeat-x;
 }
