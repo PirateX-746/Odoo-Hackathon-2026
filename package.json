@@ -1,0 +1,13 @@
+{
+  "name": "odoo-hackathon-2026",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Smart Transport Operations Platform — monorepo root (frontend/ + backend/)",
+  "scripts": {
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0"
+  }
+}
