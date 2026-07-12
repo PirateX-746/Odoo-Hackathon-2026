@@ -13,6 +13,12 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
+import { VehiclesModule } from './vehicles/vehicles.module';
+import { DriversModule } from './drivers/drivers.module';
+import { TripsModule } from './trips/trips.module';
+import { MaintenanceModule } from './maintenance/maintenance.module';
+import { FuelLogsModule } from './fuel-logs/fuel-logs.module';
+import { ExpensesModule } from './expenses/expenses.module';
 
 @Module({
   imports: [
@@ -44,6 +50,12 @@ import { UsersModule } from './users/users.module';
     PrismaModule,
     AuthModule,
     UsersModule,
+    VehiclesModule,
+    DriversModule,
+    TripsModule,
+    MaintenanceModule,
+    FuelLogsModule,
+    ExpensesModule,
   ],
   controllers: [AppController],
   providers: [
