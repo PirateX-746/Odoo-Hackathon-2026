@@ -59,14 +59,6 @@ export async function apiFetch<T>(
       };
     }
 
-    // ── Unauthorized → trigger logout ────────────────────────────────
-    if (response.status === HTTP_STATUS.UNAUTHORIZED) {
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new CustomEvent("auth:unauthorized"));
-      }
-      return { data: null, error: "Session expired. Please log in.", status: 401 };
-    }
-
     // ── No content ────────────────────────────────────────────────────
     if (response.status === HTTP_STATUS.NO_CONTENT) {
       return { data: null, error: null, status: 204 };
@@ -76,8 +68,23 @@ export async function apiFetch<T>(
     const json = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-      const errorMsg =
-        json?.message ?? json?.detail ?? json?.error ?? `HTTP ${response.status}`;
+      // NestJS's ValidationPipe returns `message` as string[]; everything
+      // else returns a single string. Normalize to one readable string.
+      const rawMessage = json?.message ?? json?.detail ?? json?.error;
+      const errorMsg = Array.isArray(rawMessage)
+        ? rawMessage.join(" ")
+        : (rawMessage ?? `HTTP ${response.status}`);
+
+      // A 401 on an *authenticated* request means the access token is
+      // invalid/expired — trigger the refresh/logout flow. A 401 from a
+      // public endpoint (e.g. wrong password on /auth/login) is just a
+      // normal failed request and must not force a logout.
+      if (response.status === HTTP_STATUS.UNAUTHORIZED && !skipAuth) {
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("auth:unauthorized"));
+        }
+      }
+
       return { data: null, error: errorMsg, status: response.status };
     }
 
