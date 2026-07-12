@@ -41,9 +41,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
         error = bodyObj.error ?? exception.name;
       }
     } else if (exception instanceof Error) {
+      // Non-HttpException errors are unexpected (DB connectivity, bugs, etc.) — log the
+      // full detail server-side but never leak internal error text to the client.
       this.logger.error(exception.message, exception.stack);
-      message = exception.message;
-      error = exception.name;
     }
 
     const body: ErrorResponseBody = {

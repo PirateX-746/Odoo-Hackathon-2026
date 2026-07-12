@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { v5 as uuidv5 } from 'uuid';
 import * as bcrypt from 'bcrypt';
 import dayjs from 'dayjs';
@@ -152,10 +153,11 @@ async function main() {
 
   const vehicles: Record<string, Awaited<ReturnType<typeof prisma.vehicle.upsert>>> = {};
   for (const v of vehicleDefs) {
-    vehicles[v.slug] = await prisma.vehicle.upsert({
-      where: { registrationNumber: v.registrationNumber },
+    const { slug, ...data } = v;
+    vehicles[slug] = await prisma.vehicle.upsert({
+      where: { registrationNumber: data.registrationNumber },
       update: {},
-      create: { id: id(v.slug), ...v },
+      create: { id: id(slug), ...data },
     });
   }
 
@@ -232,10 +234,11 @@ async function main() {
 
   const drivers: Record<string, Awaited<ReturnType<typeof prisma.driver.upsert>>> = {};
   for (const d of driverDefs) {
-    drivers[d.slug] = await prisma.driver.upsert({
-      where: { licenseNumber: d.licenseNumber },
+    const { slug, ...data } = d;
+    drivers[slug] = await prisma.driver.upsert({
+      where: { licenseNumber: data.licenseNumber },
       update: {},
-      create: { id: id(d.slug), ...d },
+      create: { id: id(slug), ...data },
     });
   }
 
