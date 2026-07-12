@@ -25,7 +25,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [pathname, user, loading, router]);
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-screen overflow-hidden">
       <Sidebar className="hidden w-60 shrink-0 border-r border-sidebar-border md:flex" />
 
       <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
@@ -35,9 +35,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </SheetContent>
       </Sheet>
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <Topbar onMenuClick={() => setMobileOpen(true)} />
-        <main className="flex-1 overflow-x-hidden p-4 md:p-6">{children}</main>
+        <main className="flex-1 overflow-x-hidden overflow-y-auto p-4 md:p-6">{children}</main>
       </div>
     </div>
   );

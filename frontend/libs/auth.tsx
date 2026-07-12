@@ -5,10 +5,10 @@ import { useRouter } from "next/navigation";
 import { apiPost } from "@/libs/api";
 import { ROUTES } from "@/libs/constant";
 import {
-  decodeJwtPayload,
   getAccessToken,
   getRefreshToken,
   removeTokens,
+  sessionFromAccessToken,
   setAuthTokens,
 } from "@/libs/helper";
 import type { Session } from "@/types/user";
@@ -18,20 +18,6 @@ interface TokenPairResponse {
   accessToken: string;
   refreshToken: string;
   user: Session;
-}
-
-interface DecodedAccessToken {
-  sub: string;
-  email: string;
-  role: Session["role"];
-  exp: number; // unix seconds
-}
-
-function sessionFromAccessToken(token: string): Session | null {
-  const decoded = decodeJwtPayload<DecodedAccessToken>(token);
-  if (!decoded) return null;
-  if (decoded.exp * 1000 <= Date.now()) return null; // expired
-  return { id: decoded.sub, email: decoded.email, role: decoded.role };
 }
 
 interface LoginResult {
@@ -74,9 +60,18 @@ async function refreshSession(): Promise<Session | null> {
   return res.data.user;
 }
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<Session | null>(null);
-  const [loading, setLoading] = useState(true);
+interface AuthProviderProps {
+  children: React.ReactNode;
+  // Decoded server-side from the request cookie (app/layout.tsx) so the very
+  // first paint already has the right role-gated UI — without this, every
+  // load starts with user=null and flips to the real session a beat later,
+  // which reads as sidebar nav items/active buttons popping in or shifting.
+  initialUser?: Session | null;
+}
+
+export function AuthProvider({ children, initialUser = null }: AuthProviderProps) {
+  const [user, setUser] = useState<Session | null>(initialUser);
+  const [loading, setLoading] = useState(!initialUser);
   const router = useRouter();
 
   const logout = useCallback(() => {
@@ -89,6 +84,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [router]);
 
   useEffect(() => {
+    if (initialUser) return; // already resolved server-side, nothing to restore
     let cancelled = false;
 
     async function restore() {
@@ -119,7 +115,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [initialUser]);
 
   useEffect(() => {
     const handleUnauthorized = async () => {

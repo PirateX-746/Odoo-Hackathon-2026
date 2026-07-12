@@ -71,39 +71,81 @@ export function DriverForm({ defaultValues, submitLabel, onSubmit }: DriverFormP
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
           <Label htmlFor="name">Full name</Label>
-          <Input id="name" placeholder="Ravi Kumar" {...register("name")} />
-          {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
+          <Input
+            id="name"
+            placeholder="Ravi Kumar"
+            aria-invalid={!!errors.name}
+            aria-describedby={errors.name ? "name-error" : undefined}
+            {...register("name")}
+          />
+          {errors.name && (
+            <p id="name-error" className="text-xs text-destructive">
+              {errors.name.message}
+            </p>
+          )}
         </div>
 
         <div className="space-y-1.5">
           <Label htmlFor="contactNumber">Contact number</Label>
-          <Input id="contactNumber" placeholder="+91-9876543210" {...register("contactNumber")} />
+          <Input
+            id="contactNumber"
+            placeholder="+91-9876543210"
+            aria-invalid={!!errors.contactNumber}
+            aria-describedby={errors.contactNumber ? "contactNumber-error" : undefined}
+            {...register("contactNumber")}
+          />
           {errors.contactNumber && (
-            <p className="text-xs text-destructive">{errors.contactNumber.message}</p>
+            <p id="contactNumber-error" className="text-xs text-destructive">
+              {errors.contactNumber.message}
+            </p>
           )}
         </div>
 
         <div className="space-y-1.5">
           <Label htmlFor="licenseNumber">License number</Label>
-          <Input id="licenseNumber" placeholder="DL-1420110012345" {...register("licenseNumber")} />
+          <Input
+            id="licenseNumber"
+            placeholder="DL-1420110012345"
+            aria-invalid={!!errors.licenseNumber}
+            aria-describedby={errors.licenseNumber ? "licenseNumber-error" : undefined}
+            {...register("licenseNumber")}
+          />
           {errors.licenseNumber && (
-            <p className="text-xs text-destructive">{errors.licenseNumber.message}</p>
+            <p id="licenseNumber-error" className="text-xs text-destructive">
+              {errors.licenseNumber.message}
+            </p>
           )}
         </div>
 
         <div className="space-y-1.5">
           <Label htmlFor="licenseCategory">License category</Label>
-          <Input id="licenseCategory" placeholder="LMV, HMV…" {...register("licenseCategory")} />
+          <Input
+            id="licenseCategory"
+            placeholder="LMV, HMV…"
+            aria-invalid={!!errors.licenseCategory}
+            aria-describedby={errors.licenseCategory ? "licenseCategory-error" : undefined}
+            {...register("licenseCategory")}
+          />
           {errors.licenseCategory && (
-            <p className="text-xs text-destructive">{errors.licenseCategory.message}</p>
+            <p id="licenseCategory-error" className="text-xs text-destructive">
+              {errors.licenseCategory.message}
+            </p>
           )}
         </div>
 
         <div className="space-y-1.5">
           <Label htmlFor="licenseExpiryDate">License expiry</Label>
-          <Input id="licenseExpiryDate" type="date" {...register("licenseExpiryDate")} />
+          <Input
+            id="licenseExpiryDate"
+            type="date"
+            aria-invalid={!!errors.licenseExpiryDate}
+            aria-describedby={errors.licenseExpiryDate ? "licenseExpiryDate-error" : undefined}
+            {...register("licenseExpiryDate")}
+          />
           {errors.licenseExpiryDate && (
-            <p className="text-xs text-destructive">{errors.licenseExpiryDate.message}</p>
+            <p id="licenseExpiryDate-error" className="text-xs text-destructive">
+              {errors.licenseExpiryDate.message}
+            </p>
           )}
         </div>
 
@@ -114,21 +156,25 @@ export function DriverForm({ defaultValues, submitLabel, onSubmit }: DriverFormP
             type="number"
             min={0}
             max={100}
+            aria-invalid={!!errors.safetyScore}
+            aria-describedby={errors.safetyScore ? "safetyScore-error" : undefined}
             {...register("safetyScore", { valueAsNumber: true })}
           />
           {errors.safetyScore && (
-            <p className="text-xs text-destructive">{errors.safetyScore.message}</p>
+            <p id="safetyScore-error" className="text-xs text-destructive">
+              {errors.safetyScore.message}
+            </p>
           )}
         </div>
 
         <div className="space-y-1.5">
-          <Label>Status</Label>
+          <Label htmlFor="status">Status</Label>
           <Controller
             control={control}
             name="status"
             render={({ field }) => (
               <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger id="status" className="w-full">
                   <SelectValue>{(value: string) => STATUS_LABELS[value] ?? value}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>

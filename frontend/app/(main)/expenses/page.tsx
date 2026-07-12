@@ -22,9 +22,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Skeleton } from "@/components/ui/skeleton";
 import { PaginationControls } from "@/app/_components/ui/PaginationControls";
 import { DeleteConfirmDialog } from "@/app/_components/ui/DeleteConfirmDialog";
+import { TableSkeletonRows } from "@/app/_components/ui/TableSkeleton";
 import { usePaginatedList } from "@/app/_hooks/usePaginatedList";
 import { CAN_MANAGE_EXPENSES, EXPENSE_TYPE } from "@/libs/constant";
 import { listExpenses, deleteExpense, type ExpenseListParams } from "@/services/expenseService";
@@ -72,8 +72,8 @@ export default function ExpensesPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-foreground">Expenses</h1>
-          <p className="text-sm text-muted-foreground">Trip and vehicle-related spend.</p>
+          <h1 className="text-foreground text-xl font-semibold">Expenses</h1>
+          <p className="text-muted-foreground text-sm">Trip and vehicle-related spend.</p>
         </div>
         {canManage && (
           <Button render={<Link href="/expenses/new" />} nativeButton={false}>
@@ -105,29 +105,27 @@ export default function ExpensesPage() {
       </div>
 
       <Card className="p-0">
-        {loading ? (
-          <div className="space-y-2 p-4">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} className="h-9 w-full" />
-            ))}
-          </div>
-        ) : data.length === 0 ? (
-          <p className="py-12 text-center text-sm text-muted-foreground">
-            No expenses match your filters.
-          </p>
-        ) : (
-          <Table>
-            <TableHeader>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="pl-4">Vehicle</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Date</TableHead>
+              <TableHead className="text-right">Amount</TableHead>
+              <TableHead className="pr-4 text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableSkeletonRows columns={5} />
+            ) : data.length === 0 ? (
               <TableRow>
-                <TableHead className="pl-4">Vehicle</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-                <TableHead className="pr-4 text-right">Actions</TableHead>
+                <TableCell colSpan={5} className="text-muted-foreground py-12 text-center text-sm">
+                  No expenses match your filters.
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.map((expense) => (
+            ) : (
+              data.map((expense) => (
                 <TableRow key={expense.id}>
                   <TableCell className="pl-4 font-mono text-sm">
                     {vehiclePlate(expense.vehicleId)}
@@ -135,7 +133,7 @@ export default function ExpensesPage() {
                   <TableCell>
                     <Badge variant="outline">{TYPE_LABELS[expense.type]}</Badge>
                   </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
+                  <TableCell className="text-muted-foreground text-xs">
                     {formatDate(expense.date)}
                   </TableCell>
                   <TableCell className="text-right font-mono text-sm tabular-nums">
@@ -143,7 +141,7 @@ export default function ExpensesPage() {
                   </TableCell>
                   <TableCell className="pr-4">
                     {canManage && (
-                      <div className="flex justify-end gap-1">
+                      <div className="flex justify-end gap-2">
                         <Button
                           variant="ghost"
                           size="icon-sm"
@@ -155,7 +153,7 @@ export default function ExpensesPage() {
                         <DeleteConfirmDialog
                           trigger={
                             <Button variant="ghost" size="icon-sm">
-                              <Trash2 className="size-4 text-destructive" />
+                              <Trash2 className="text-destructive size-4" />
                             </Button>
                           }
                           title="Delete expense?"
@@ -166,12 +164,17 @@ export default function ExpensesPage() {
                     )}
                   </TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
+              ))
+            )}
+          </TableBody>
+        </Table>
         {!loading && data.length > 0 && (
-          <PaginationControls page={page} pageCount={pageCount} total={total} onPageChange={goToPage} />
+          <PaginationControls
+            page={page}
+            pageCount={pageCount}
+            total={total}
+            onPageChange={goToPage}
+          />
         )}
       </Card>
     </div>

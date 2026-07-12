@@ -22,9 +22,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/app/_components/ui/StatusBadge";
 import { PaginationControls } from "@/app/_components/ui/PaginationControls";
+import { TableSkeletonRows } from "@/app/_components/ui/TableSkeleton";
 import { usePaginatedList } from "@/app/_hooks/usePaginatedList";
 import { CAN_MANAGE_TRIPS, TRIP_STATUS } from "@/libs/constant";
 import { listTrips, dispatchTrip, cancelTrip, type TripListParams } from "@/services/tripService";
@@ -105,8 +105,8 @@ export default function TripsPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-foreground">Trips</h1>
-          <p className="text-sm text-muted-foreground">Dispatch and track fleet trips.</p>
+          <h1 className="text-foreground text-xl font-semibold">Trips</h1>
+          <p className="text-muted-foreground text-sm">Dispatch and track fleet trips.</p>
         </div>
         {canManage && (
           <Button render={<Link href="/trips/new" />} nativeButton={false}>
@@ -118,7 +118,7 @@ export default function TripsPage() {
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <div className="relative flex-1 sm:max-w-xs">
-          <Search className="absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Search className="text-muted-foreground absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2" />
           <Input
             placeholder="Search source or destination…"
             className="pl-8"
@@ -147,47 +147,52 @@ export default function TripsPage() {
       </div>
 
       <Card className="p-0">
-        {loading ? (
-          <div className="space-y-2 p-4">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} className="h-9 w-full" />
-            ))}
-          </div>
-        ) : data.length === 0 ? (
-          <p className="py-12 text-center text-sm text-muted-foreground">
-            No trips match your filters.
-          </p>
-        ) : (
-          <Table>
-            <TableHeader>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="pl-4">Route</TableHead>
+              <TableHead>Vehicle</TableHead>
+              <TableHead>Driver</TableHead>
+              <TableHead>Created</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="pr-4 text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableSkeletonRows columns={6} />
+            ) : data.length === 0 ? (
               <TableRow>
-                <TableHead className="pl-4">Route</TableHead>
-                <TableHead>Vehicle</TableHead>
-                <TableHead>Driver</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="pr-4 text-right">Actions</TableHead>
+                <TableCell colSpan={6} className="text-muted-foreground py-12 text-center text-sm">
+                  No trips match your filters.
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.map((t) => (
+            ) : (
+              data.map((t) => (
                 <TableRow key={t.id}>
                   <TableCell className="pl-4 text-sm">
                     {t.source} <span className="text-muted-foreground">→</span> {t.destination}
                   </TableCell>
-                  <TableCell className="font-mono text-xs text-muted-foreground">
+                  <TableCell className="text-muted-foreground font-mono text-xs">
                     {vehiclePlate(t.vehicleId)}
                   </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{driverName(t.driverId)}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
+                  <TableCell className="text-muted-foreground text-sm">
+                    {driverName(t.driverId)}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground text-xs">
                     {formatDate(t.createdAt)}
                   </TableCell>
                   <TableCell>
                     <StatusBadge status={t.status} />
                   </TableCell>
                   <TableCell className="pr-4">
-                    <div className="flex justify-end gap-1">
-                      <Button variant="ghost" size="icon-sm" render={<Link href={`/trips/${t.id}`} />} nativeButton={false}>
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        render={<Link href={`/trips/${t.id}`} />}
+                        nativeButton={false}
+                      >
                         <Eye className="size-4" />
                       </Button>
                       {canManage && t.status === TRIP_STATUS.DRAFT && (
@@ -210,18 +215,23 @@ export default function TripsPage() {
                             onClick={() => handleCancel(t.id)}
                             aria-label="Cancel trip"
                           >
-                            <Ban className="size-4 text-destructive" />
+                            <Ban className="text-destructive size-4" />
                           </Button>
                         )}
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
+              ))
+            )}
+          </TableBody>
+        </Table>
         {!loading && data.length > 0 && (
-          <PaginationControls page={page} pageCount={pageCount} total={total} onPageChange={goToPage} />
+          <PaginationControls
+            page={page}
+            pageCount={pageCount}
+            total={total}
+            onPageChange={goToPage}
+          />
         )}
       </Card>
     </div>

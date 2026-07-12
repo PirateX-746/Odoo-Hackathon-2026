@@ -22,7 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Skeleton } from "@/components/ui/skeleton";
+import { TableSkeletonRows } from "@/app/_components/ui/TableSkeleton";
 import { ROLES, ROLE_LABELS, type Role } from "@/libs/constant";
 import { listUsers, updateUser } from "@/services/userService";
 import { formatDate, extractErrorMessage } from "@/libs/helper";
@@ -80,8 +80,8 @@ export default function UsersPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-foreground">Users</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="text-foreground text-xl font-semibold">Users</h1>
+          <p className="text-muted-foreground text-sm">
             Everyone with access to the dispatch console. Admin only.
           </p>
         </div>
@@ -92,28 +92,24 @@ export default function UsersPage() {
       </div>
 
       <Card className="p-0">
-        {loading ? (
-          <div className="space-y-2 p-4">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Skeleton key={i} className="h-9 w-full" />
-            ))}
-          </div>
-        ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="pl-4">Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="pr-4">Member since</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.map((u) => (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="pl-4">Name</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Role</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="pr-4">Member since</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableSkeletonRows columns={5} />
+            ) : (
+              users.map((u) => (
                 <TableRow key={u.id}>
                   <TableCell className="pl-4 text-sm font-medium">{u.name}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{u.email}</TableCell>
+                  <TableCell className="text-muted-foreground text-sm">{u.email}</TableCell>
                   <TableCell>
                     <Select
                       value={u.role}
@@ -146,14 +142,14 @@ export default function UsersPage() {
                       </Badge>
                     </button>
                   </TableCell>
-                  <TableCell className="pr-4 text-sm text-muted-foreground">
+                  <TableCell className="text-muted-foreground pr-4 text-sm">
                     {formatDate(u.createdAt)}
                   </TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
+              ))
+            )}
+          </TableBody>
+        </Table>
       </Card>
     </div>
   );

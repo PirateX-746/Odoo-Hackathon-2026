@@ -84,10 +84,14 @@ export function CompleteTripDialog({
               id="endOdometerKm"
               type="number"
               step="0.01"
+              aria-invalid={!!errors.endOdometerKm}
+              aria-describedby={errors.endOdometerKm ? "endOdometerKm-error" : undefined}
               {...register("endOdometerKm", { valueAsNumber: true })}
             />
             {errors.endOdometerKm && (
-              <p className="text-xs text-destructive">{errors.endOdometerKm.message}</p>
+              <p id="endOdometerKm-error" className="text-xs text-destructive">
+                {errors.endOdometerKm.message}
+              </p>
             )}
           </div>
           <div className="space-y-1.5">
@@ -96,10 +100,14 @@ export function CompleteTripDialog({
               id="fuelConsumedLiters"
               type="number"
               step="0.01"
+              aria-invalid={!!errors.fuelConsumedLiters}
+              aria-describedby={errors.fuelConsumedLiters ? "fuelConsumedLiters-error" : undefined}
               {...register("fuelConsumedLiters", { valueAsNumber: true })}
             />
             {errors.fuelConsumedLiters && (
-              <p className="text-xs text-destructive">{errors.fuelConsumedLiters.message}</p>
+              <p id="fuelConsumedLiters-error" className="text-xs text-destructive">
+                {errors.fuelConsumedLiters.message}
+              </p>
             )}
           </div>
           <div className="space-y-1.5">
@@ -112,6 +120,8 @@ export function CompleteTripDialog({
                   id="revenue"
                   type="number"
                   step="0.01"
+                  aria-invalid={!!errors.revenue}
+                  aria-describedby={errors.revenue ? "revenue-error" : undefined}
                   value={field.value ?? ""}
                   onChange={(e) =>
                     field.onChange(e.target.value === "" ? undefined : Number(e.target.value))
@@ -119,7 +129,11 @@ export function CompleteTripDialog({
                 />
               )}
             />
-            {errors.revenue && <p className="text-xs text-destructive">{errors.revenue.message}</p>}
+            {errors.revenue && (
+              <p id="revenue-error" className="text-xs text-destructive">
+                {errors.revenue.message}
+              </p>
+            )}
           </div>
           <DialogFooter>
             <DialogClose render={<Button type="button" variant="outline" />}>Cancel</DialogClose>

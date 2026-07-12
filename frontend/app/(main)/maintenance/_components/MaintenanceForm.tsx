@@ -58,13 +58,18 @@ export function MaintenanceForm({ submitLabel, onSubmit }: MaintenanceFormProps)
     <form onSubmit={submit} className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5 sm:col-span-2">
-          <Label>Vehicle</Label>
+          <Label htmlFor="vehicleId">Vehicle</Label>
           <Controller
             control={control}
             name="vehicleId"
             render={({ field }) => (
               <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger
+                  id="vehicleId"
+                  className="w-full"
+                  aria-invalid={!!errors.vehicleId}
+                  aria-describedby={errors.vehicleId ? "vehicleId-error" : undefined}
+                >
                   <SelectValue>
                     {(value: string) =>
                       vehicles.find((v) => v.id === value)?.registrationNumber ??
@@ -82,19 +87,44 @@ export function MaintenanceForm({ submitLabel, onSubmit }: MaintenanceFormProps)
               </Select>
             )}
           />
-          {errors.vehicleId && <p className="text-xs text-destructive">{errors.vehicleId.message}</p>}
+          {errors.vehicleId && (
+            <p id="vehicleId-error" className="text-xs text-destructive">
+              {errors.vehicleId.message}
+            </p>
+          )}
         </div>
 
         <div className="space-y-1.5">
           <Label htmlFor="type">Type</Label>
-          <Input id="type" placeholder="Oil change, Brake service…" {...register("type")} />
-          {errors.type && <p className="text-xs text-destructive">{errors.type.message}</p>}
+          <Input
+            id="type"
+            placeholder="Oil change, Brake service…"
+            aria-invalid={!!errors.type}
+            aria-describedby={errors.type ? "type-error" : undefined}
+            {...register("type")}
+          />
+          {errors.type && (
+            <p id="type-error" className="text-xs text-destructive">
+              {errors.type.message}
+            </p>
+          )}
         </div>
 
         <div className="space-y-1.5">
           <Label htmlFor="cost">Cost</Label>
-          <Input id="cost" type="number" step="0.01" {...register("cost", { valueAsNumber: true })} />
-          {errors.cost && <p className="text-xs text-destructive">{errors.cost.message}</p>}
+          <Input
+            id="cost"
+            type="number"
+            step="0.01"
+            aria-invalid={!!errors.cost}
+            aria-describedby={errors.cost ? "cost-error" : undefined}
+            {...register("cost", { valueAsNumber: true })}
+          />
+          {errors.cost && (
+            <p id="cost-error" className="text-xs text-destructive">
+              {errors.cost.message}
+            </p>
+          )}
         </div>
 
         <div className="space-y-1.5 sm:col-span-2">

@@ -1,4 +1,5 @@
 import { ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, RETRY_AFTER_DEFAULT } from "@/libs/constant";
+import type { Session } from "@/types/user";
 
 // ─── Token helpers ───────────────────────────────────────────────────────
 const readCookie = (name: string): string | null => {
@@ -48,6 +49,23 @@ export const decodeJwtPayload = <T,>(token: string): T | null => {
     return null;
   }
 };
+
+interface DecodedAccessToken {
+  sub: string;
+  email: string;
+  role: Session["role"];
+  exp: number; // unix seconds
+}
+
+// Callable from both Server Components (decoding the request cookie for the
+// initial render) and client code (libs/auth.tsx) — kept dependency-free of
+// `document`/`window` so it works in both environments.
+export function sessionFromAccessToken(token: string): Session | null {
+  const decoded = decodeJwtPayload<DecodedAccessToken>(token);
+  if (!decoded) return null;
+  if (decoded.exp * 1000 <= Date.now()) return null; // expired
+  return { id: decoded.sub, email: decoded.email, role: decoded.role };
+}
 
 // ─── Rate-limit helper ───────────────────────────────────────────────────
 export const getRetryAfterSeconds = (headers: Headers): number => {

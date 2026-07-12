@@ -73,28 +73,66 @@ export function VehicleForm({ defaultValues, submitLabel, onSubmit }: VehicleFor
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
           <Label htmlFor="registrationNumber">Registration number</Label>
-          <Input id="registrationNumber" placeholder="MH12AB1234" {...register("registrationNumber")} />
+          <Input
+            id="registrationNumber"
+            placeholder="MH12AB1234"
+            aria-invalid={!!errors.registrationNumber}
+            aria-describedby={errors.registrationNumber ? "registrationNumber-error" : undefined}
+            {...register("registrationNumber")}
+          />
           {errors.registrationNumber && (
-            <p className="text-xs text-destructive">{errors.registrationNumber.message}</p>
+            <p id="registrationNumber-error" className="text-xs text-destructive">
+              {errors.registrationNumber.message}
+            </p>
           )}
         </div>
 
         <div className="space-y-1.5">
           <Label htmlFor="name">Name</Label>
-          <Input id="name" placeholder="Van-05" {...register("name")} />
-          {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
+          <Input
+            id="name"
+            placeholder="Van-05"
+            aria-invalid={!!errors.name}
+            aria-describedby={errors.name ? "name-error" : undefined}
+            {...register("name")}
+          />
+          {errors.name && (
+            <p id="name-error" className="text-xs text-destructive">
+              {errors.name.message}
+            </p>
+          )}
         </div>
 
         <div className="space-y-1.5">
           <Label htmlFor="type">Type</Label>
-          <Input id="type" placeholder="Van, Truck, Bus…" {...register("type")} />
-          {errors.type && <p className="text-xs text-destructive">{errors.type.message}</p>}
+          <Input
+            id="type"
+            placeholder="Van, Truck, Bus…"
+            aria-invalid={!!errors.type}
+            aria-describedby={errors.type ? "type-error" : undefined}
+            {...register("type")}
+          />
+          {errors.type && (
+            <p id="type-error" className="text-xs text-destructive">
+              {errors.type.message}
+            </p>
+          )}
         </div>
 
         <div className="space-y-1.5">
           <Label htmlFor="region">Region</Label>
-          <Input id="region" placeholder="North, South, East, West…" {...register("region")} />
-          {errors.region && <p className="text-xs text-destructive">{errors.region.message}</p>}
+          <Input
+            id="region"
+            placeholder="North, South, East, West…"
+            aria-invalid={!!errors.region}
+            aria-describedby={errors.region ? "region-error" : undefined}
+            {...register("region")}
+          />
+          {errors.region && (
+            <p id="region-error" className="text-xs text-destructive">
+              {errors.region.message}
+            </p>
+          )}
         </div>
 
         <div className="space-y-1.5">
@@ -103,10 +141,14 @@ export function VehicleForm({ defaultValues, submitLabel, onSubmit }: VehicleFor
             id="maxLoadCapacityKg"
             type="number"
             step="0.01"
+            aria-invalid={!!errors.maxLoadCapacityKg}
+            aria-describedby={errors.maxLoadCapacityKg ? "maxLoadCapacityKg-error" : undefined}
             {...register("maxLoadCapacityKg", { valueAsNumber: true })}
           />
           {errors.maxLoadCapacityKg && (
-            <p className="text-xs text-destructive">{errors.maxLoadCapacityKg.message}</p>
+            <p id="maxLoadCapacityKg-error" className="text-xs text-destructive">
+              {errors.maxLoadCapacityKg.message}
+            </p>
           )}
         </div>
 
@@ -116,10 +158,14 @@ export function VehicleForm({ defaultValues, submitLabel, onSubmit }: VehicleFor
             id="acquisitionCost"
             type="number"
             step="0.01"
+            aria-invalid={!!errors.acquisitionCost}
+            aria-describedby={errors.acquisitionCost ? "acquisitionCost-error" : undefined}
             {...register("acquisitionCost", { valueAsNumber: true })}
           />
           {errors.acquisitionCost && (
-            <p className="text-xs text-destructive">{errors.acquisitionCost.message}</p>
+            <p id="acquisitionCost-error" className="text-xs text-destructive">
+              {errors.acquisitionCost.message}
+            </p>
           )}
         </div>
 
@@ -129,21 +175,25 @@ export function VehicleForm({ defaultValues, submitLabel, onSubmit }: VehicleFor
             id="odometerKm"
             type="number"
             step="0.01"
+            aria-invalid={!!errors.odometerKm}
+            aria-describedby={errors.odometerKm ? "odometerKm-error" : undefined}
             {...register("odometerKm", { valueAsNumber: true })}
           />
           {errors.odometerKm && (
-            <p className="text-xs text-destructive">{errors.odometerKm.message}</p>
+            <p id="odometerKm-error" className="text-xs text-destructive">
+              {errors.odometerKm.message}
+            </p>
           )}
         </div>
 
         <div className="space-y-1.5">
-          <Label>Status</Label>
+          <Label htmlFor="status">Status</Label>
           <Controller
             control={control}
             name="status"
             render={({ field }) => (
               <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger id="status" className="w-full">
                   <SelectValue>{(value: string) => STATUS_LABELS[value] ?? value}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>

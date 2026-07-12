@@ -100,6 +100,16 @@ export const CAN_MANAGE_EXPENSES: Role[] = [
   ROLES.FLEET_MANAGER,
   ROLES.FINANCIAL_ANALYST,
 ];
+// Mirrors DashboardController's and InsightsController's identical
+// class-level @Roles() (backend/src/dashboard/dashboard.controller.ts,
+// insights/insights.controller.ts) — unlike most other GET endpoints, these
+// are role-restricted server-side (notably: DRIVER is excluded from both).
+export const CAN_VIEW_FLEET_ANALYTICS: Role[] = [
+  ROLES.ADMIN,
+  ROLES.FLEET_MANAGER,
+  ROLES.SAFETY_OFFICER,
+  ROLES.FINANCIAL_ANALYST,
+];
 
 // ─── Domain enums ────────────────────────────────────────────────────────
 // All of the below mirror backend/prisma/schema.prisma exactly.

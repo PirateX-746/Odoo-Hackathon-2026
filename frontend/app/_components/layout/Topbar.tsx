@@ -2,7 +2,6 @@
 
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "./ThemeToggle";
 import { UserMenu } from "./UserMenu";
 
 export function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
@@ -18,7 +17,6 @@ export function Topbar({ onMenuClick }: { onMenuClick: () => void }) {
         <Menu className="size-4" />
       </Button>
       <div className="flex-1" />
-      <ThemeToggle />
       <UserMenu />
     </header>
   );

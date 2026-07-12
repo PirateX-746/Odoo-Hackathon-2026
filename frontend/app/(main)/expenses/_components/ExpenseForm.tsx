@@ -78,13 +78,18 @@ export function ExpenseForm({ defaultValues, submitLabel, onSubmit }: ExpenseFor
     <form onSubmit={submit} className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
-          <Label>Vehicle</Label>
+          <Label htmlFor="vehicleId">Vehicle</Label>
           <Controller
             control={control}
             name="vehicleId"
             render={({ field }) => (
               <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger
+                  id="vehicleId"
+                  className="w-full"
+                  aria-invalid={!!errors.vehicleId}
+                  aria-describedby={errors.vehicleId ? "vehicleId-error" : undefined}
+                >
                   <SelectValue>
                     {(value: string) =>
                       vehicles.find((v) => v.id === value)?.registrationNumber ??
@@ -102,17 +107,21 @@ export function ExpenseForm({ defaultValues, submitLabel, onSubmit }: ExpenseFor
               </Select>
             )}
           />
-          {errors.vehicleId && <p className="text-xs text-destructive">{errors.vehicleId.message}</p>}
+          {errors.vehicleId && (
+            <p id="vehicleId-error" className="text-xs text-destructive">
+              {errors.vehicleId.message}
+            </p>
+          )}
         </div>
 
         <div className="space-y-1.5">
-          <Label>Type</Label>
+          <Label htmlFor="type">Type</Label>
           <Controller
             control={control}
             name="type"
             render={({ field }) => (
               <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger id="type" className="w-full">
                   <SelectValue>{(value: string) => TYPE_LABELS[value] ?? value}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
@@ -129,14 +138,35 @@ export function ExpenseForm({ defaultValues, submitLabel, onSubmit }: ExpenseFor
 
         <div className="space-y-1.5">
           <Label htmlFor="amount">Amount</Label>
-          <Input id="amount" type="number" step="0.01" {...register("amount", { valueAsNumber: true })} />
-          {errors.amount && <p className="text-xs text-destructive">{errors.amount.message}</p>}
+          <Input
+            id="amount"
+            type="number"
+            step="0.01"
+            aria-invalid={!!errors.amount}
+            aria-describedby={errors.amount ? "amount-error" : undefined}
+            {...register("amount", { valueAsNumber: true })}
+          />
+          {errors.amount && (
+            <p id="amount-error" className="text-xs text-destructive">
+              {errors.amount.message}
+            </p>
+          )}
         </div>
 
         <div className="space-y-1.5">
           <Label htmlFor="date">Date</Label>
-          <Input id="date" type="date" {...register("date")} />
-          {errors.date && <p className="text-xs text-destructive">{errors.date.message}</p>}
+          <Input
+            id="date"
+            type="date"
+            aria-invalid={!!errors.date}
+            aria-describedby={errors.date ? "date-error" : undefined}
+            {...register("date")}
+          />
+          {errors.date && (
+            <p id="date-error" className="text-xs text-destructive">
+              {errors.date.message}
+            </p>
+          )}
         </div>
 
         <div className="space-y-1.5 sm:col-span-2">

@@ -22,10 +22,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/app/_components/ui/StatusBadge";
 import { PaginationControls } from "@/app/_components/ui/PaginationControls";
 import { DeleteConfirmDialog } from "@/app/_components/ui/DeleteConfirmDialog";
+import { TableSkeletonRows } from "@/app/_components/ui/TableSkeleton";
 import { usePaginatedList } from "@/app/_hooks/usePaginatedList";
 import { useAuth } from "@/libs/auth";
 import { CAN_DELETE_VEHICLES, CAN_MANAGE_VEHICLES, VEHICLE_STATUS } from "@/libs/constant";
@@ -69,8 +69,8 @@ export default function VehiclesPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-foreground">Vehicles</h1>
-          <p className="text-sm text-muted-foreground">Manage your fleet&apos;s vehicles.</p>
+          <h1 className="text-foreground text-xl font-semibold">Vehicles</h1>
+          <p className="text-muted-foreground text-sm">Manage your fleet&apos;s vehicles.</p>
         </div>
         {canManage && (
           <Button render={<Link href="/vehicles/new" />} nativeButton={false}>
@@ -82,7 +82,7 @@ export default function VehiclesPage() {
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <div className="relative flex-1 sm:max-w-xs">
-          <Search className="absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Search className="text-muted-foreground absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2" />
           <Input
             placeholder="Search plate or name…"
             className="pl-8"
@@ -111,36 +111,34 @@ export default function VehiclesPage() {
       </div>
 
       <Card className="p-0">
-        {loading ? (
-          <div className="space-y-2 p-4">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} className="h-9 w-full" />
-            ))}
-          </div>
-        ) : data.length === 0 ? (
-          <p className="py-12 text-center text-sm text-muted-foreground">
-            No vehicles match your filters.
-          </p>
-        ) : (
-          <Table>
-            <TableHeader>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="pl-4">Plate</TableHead>
+              <TableHead>Name</TableHead>
+              <TableHead>Type</TableHead>
+              <TableHead>Region</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Odometer</TableHead>
+              <TableHead className="pr-4 text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableSkeletonRows columns={7} />
+            ) : data.length === 0 ? (
               <TableRow>
-                <TableHead className="pl-4">Plate</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Region</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Odometer</TableHead>
-                <TableHead className="pr-4 text-right">Actions</TableHead>
+                <TableCell colSpan={7} className="text-muted-foreground py-12 text-center text-sm">
+                  No vehicles match your filters.
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.map((v) => (
+            ) : (
+              data.map((v) => (
                 <TableRow key={v.id}>
                   <TableCell className="pl-4 font-mono text-sm">{v.registrationNumber}</TableCell>
                   <TableCell className="text-sm">{v.name}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{v.type}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">{v.region}</TableCell>
+                  <TableCell className="text-muted-foreground text-sm">{v.type}</TableCell>
+                  <TableCell className="text-muted-foreground text-sm">{v.region}</TableCell>
                   <TableCell>
                     <StatusBadge status={v.status} />
                   </TableCell>
@@ -148,8 +146,13 @@ export default function VehiclesPage() {
                     {v.odometerKm.toLocaleString("en-IN")} km
                   </TableCell>
                   <TableCell className="pr-4">
-                    <div className="flex justify-end gap-1">
-                      <Button variant="ghost" size="icon-sm" render={<Link href={`/vehicles/${v.id}`} />} nativeButton={false}>
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        render={<Link href={`/vehicles/${v.id}`} />}
+                        nativeButton={false}
+                      >
                         <Eye className="size-4" />
                       </Button>
                       {canManage && (
@@ -166,7 +169,7 @@ export default function VehiclesPage() {
                         <DeleteConfirmDialog
                           trigger={
                             <Button variant="ghost" size="icon-sm">
-                              <Trash2 className="size-4 text-destructive" />
+                              <Trash2 className="text-destructive size-4" />
                             </Button>
                           }
                           title="Delete vehicle?"
@@ -177,12 +180,17 @@ export default function VehiclesPage() {
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
+              ))
+            )}
+          </TableBody>
+        </Table>
         {!loading && data.length > 0 && (
-          <PaginationControls page={page} pageCount={pageCount} total={total} onPageChange={goToPage} />
+          <PaginationControls
+            page={page}
+            pageCount={pageCount}
+            total={total}
+            onPageChange={goToPage}
+          />
         )}
       </Card>
     </div>

@@ -39,13 +39,12 @@ export function Sidebar({ className, onNavigate }: { className?: string; onNavig
               className={cn(
                 "flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm font-medium transition-colors",
                 active
-                  ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                  ? "bg-primary/10 text-primary"
                   : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
               )}
             >
               <Icon className="size-4" />
               {item.label}
-              {active && <span className="ml-auto h-4 w-0.5 rounded-full bg-primary" />}
             </Link>
           );
         })}

@@ -21,9 +21,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Skeleton } from "@/components/ui/skeleton";
 import { PaginationControls } from "@/app/_components/ui/PaginationControls";
 import { DeleteConfirmDialog } from "@/app/_components/ui/DeleteConfirmDialog";
+import { TableSkeletonRows } from "@/app/_components/ui/TableSkeleton";
 import { usePaginatedList } from "@/app/_hooks/usePaginatedList";
 import { CAN_MANAGE_FUEL_LOGS } from "@/libs/constant";
 import { listFuelLogs, deleteFuelLog, type FuelLogListParams } from "@/services/fuelLogService";
@@ -66,8 +66,10 @@ export default function FuelPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-foreground">Fuel Logs</h1>
-          <p className="text-sm text-muted-foreground">Fuel purchases and consumption per vehicle.</p>
+          <h1 className="text-foreground text-xl font-semibold">Fuel Logs</h1>
+          <p className="text-muted-foreground text-sm">
+            Fuel purchases and consumption per vehicle.
+          </p>
         </div>
         {canManage && (
           <Button render={<Link href="/fuel/new" />} nativeButton={false}>
@@ -80,7 +82,9 @@ export default function FuelPage() {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <Select
           value={(params.vehicleId as string | undefined) ?? ALL_VEHICLES}
-          onValueChange={(v) => updateParams({ vehicleId: !v || v === ALL_VEHICLES ? undefined : v })}
+          onValueChange={(v) =>
+            updateParams({ vehicleId: !v || v === ALL_VEHICLES ? undefined : v })
+          }
         >
           <SelectTrigger className="w-full sm:w-56">
             <SelectValue>
@@ -103,39 +107,43 @@ export default function FuelPage() {
       </div>
 
       <Card className="p-0">
-        {loading ? (
-          <div className="space-y-2 p-4">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} className="h-9 w-full" />
-            ))}
-          </div>
-        ) : data.length === 0 ? (
-          <p className="py-12 text-center text-sm text-muted-foreground">
-            No fuel logs match your filters.
-          </p>
-        ) : (
-          <Table>
-            <TableHeader>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="pl-4">Vehicle</TableHead>
+              <TableHead>Date</TableHead>
+              <TableHead className="text-right">Liters</TableHead>
+              <TableHead className="text-right">Cost</TableHead>
+              <TableHead className="pr-4 text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableSkeletonRows columns={5} />
+            ) : data.length === 0 ? (
               <TableRow>
-                <TableHead className="pl-4">Vehicle</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead className="text-right">Liters</TableHead>
-                <TableHead className="text-right">Cost</TableHead>
-                <TableHead className="pr-4 text-right">Actions</TableHead>
+                <TableCell colSpan={5} className="text-muted-foreground py-12 text-center text-sm">
+                  No fuel logs match your filters.
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.map((log) => (
+            ) : (
+              data.map((log) => (
                 <TableRow key={log.id}>
-                  <TableCell className="pl-4 font-mono text-sm">{vehiclePlate(log.vehicleId)}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{formatDate(log.date)}</TableCell>
-                  <TableCell className="text-right font-mono text-sm tabular-nums">{log.liters} L</TableCell>
+                  <TableCell className="pl-4 font-mono text-sm">
+                    {vehiclePlate(log.vehicleId)}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground text-xs">
+                    {formatDate(log.date)}
+                  </TableCell>
+                  <TableCell className="text-right font-mono text-sm tabular-nums">
+                    {log.liters} L
+                  </TableCell>
                   <TableCell className="text-right font-mono text-sm tabular-nums">
                     ₹{log.cost.toLocaleString("en-IN")}
                   </TableCell>
                   <TableCell className="pr-4">
                     {canManage && (
-                      <div className="flex justify-end gap-1">
+                      <div className="flex justify-end gap-2">
                         <Button
                           variant="ghost"
                           size="icon-sm"
@@ -147,7 +155,7 @@ export default function FuelPage() {
                         <DeleteConfirmDialog
                           trigger={
                             <Button variant="ghost" size="icon-sm">
-                              <Trash2 className="size-4 text-destructive" />
+                              <Trash2 className="text-destructive size-4" />
                             </Button>
                           }
                           title="Delete fuel log?"
@@ -158,12 +166,17 @@ export default function FuelPage() {
                     )}
                   </TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
+              ))
+            )}
+          </TableBody>
+        </Table>
         {!loading && data.length > 0 && (
-          <PaginationControls page={page} pageCount={pageCount} total={total} onPageChange={goToPage} />
+          <PaginationControls
+            page={page}
+            pageCount={pageCount}
+            total={total}
+            onPageChange={goToPage}
+          />
         )}
       </Card>
     </div>

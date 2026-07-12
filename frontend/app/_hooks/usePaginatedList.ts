@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { DEFAULT_PAGE, DEFAULT_LIMIT } from "@/libs/constant";
 import type { PaginatedResult } from "@/services/types";
 
@@ -33,13 +33,18 @@ export function usePaginatedList<T, P extends ListParams = ListParams>(
   const [total, setTotal] = useState(0);
   const [pageCount, setPageCount] = useState(1);
   const [loading, setLoading] = useState(true);
+  // Track only the very first fetch — search/filter/page changes refetch in
+  // the background so the table keeps showing its current rows instead of
+  // flashing to a skeleton on every keystroke.
+  const hasLoadedOnce = useRef(false);
 
   const refetch = useCallback(async () => {
-    setLoading(true);
+    if (!hasLoadedOnce.current) setLoading(true);
     const res = await fetcher(params as P);
     setData(res.data);
     setTotal(res.meta.total);
     setPageCount(res.meta.totalPages);
+    hasLoadedOnce.current = true;
     setLoading(false);
   }, [fetcher, params]);
 

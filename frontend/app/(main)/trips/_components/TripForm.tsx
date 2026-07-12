@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { Sparkles } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +21,12 @@ import type { Vehicle } from "@/types/vehicle";
 import type { Driver } from "@/types/driver";
 import { listDispatchEligibleVehicles } from "@/services/vehicleService";
 import { listDispatchEligibleDrivers } from "@/services/driverService";
+import {
+  getDispatchRecommendations,
+  type DispatchRecommendation,
+} from "@/services/dispatchService";
+import { useAuth } from "@/libs/auth";
+import { CAN_MANAGE_TRIPS } from "@/libs/constant";
 
 const tripSchema = z.object({
   source: z.string().min(1, "Required"),
@@ -37,8 +45,13 @@ interface TripFormProps {
 }
 
 export function TripForm({ submitLabel, onSubmit }: TripFormProps) {
+  const { user } = useAuth();
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [suggesting, setSuggesting] = useState(false);
+  const [suggestion, setSuggestion] = useState<DispatchRecommendation | null>(null);
+
+  const canUseDispatchAssistant = Boolean(user && CAN_MANAGE_TRIPS.includes(user.role));
 
   useEffect(() => {
     listDispatchEligibleVehicles().then(setVehicles);
@@ -49,6 +62,8 @@ export function TripForm({ submitLabel, onSubmit }: TripFormProps) {
     register,
     handleSubmit,
     control,
+    getValues,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     resolver: zodResolver(tripSchema),
@@ -66,6 +81,38 @@ export function TripForm({ submitLabel, onSubmit }: TripFormProps) {
     await onSubmit(values);
   });
 
+  const handleSuggest = async () => {
+    const values = getValues();
+    if (!values.source || !values.destination || !values.cargoWeightKg || !values.plannedDistanceKm) {
+      toast.error("Fill in source, destination, cargo weight, and distance first.");
+      return;
+    }
+    setSuggesting(true);
+    setSuggestion(null);
+    const { recommendations, error } = await getDispatchRecommendations({
+      source: values.source,
+      destination: values.destination,
+      cargoWeightKg: values.cargoWeightKg,
+      plannedDistanceKm: values.plannedDistanceKm,
+    });
+    setSuggesting(false);
+    if (error) {
+      toast.error(error);
+      return;
+    }
+    if (recommendations.length === 0) {
+      toast.info("No suitable vehicle/driver combination found.");
+      return;
+    }
+    setSuggestion(recommendations[0]);
+  };
+
+  const applySuggestion = () => {
+    if (!suggestion) return;
+    setValue("vehicleId", suggestion.vehicleId, { shouldValidate: true });
+    setValue("driverId", suggestion.driverId, { shouldValidate: true });
+  };
+
   return (
     <form onSubmit={submit} className="space-y-6">
       <p className="rounded-md border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
@@ -73,29 +120,87 @@ export function TripForm({ submitLabel, onSubmit }: TripFormProps) {
         created as a draft — dispatch it from the trip list once ready.
       </p>
 
+      {canUseDispatchAssistant && (
+        <div className="rounded-md border border-border bg-muted/20 p-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+              <Sparkles className="size-4 text-primary" />
+              Smart Dispatch Assistant
+            </div>
+            <Button type="button" size="sm" variant="outline" onClick={handleSuggest} disabled={suggesting}>
+              {suggesting ? "Thinking…" : "Suggest vehicle & driver"}
+            </Button>
+          </div>
+          {suggestion && (
+            <div className="mt-2 flex items-start justify-between gap-3 rounded-md bg-background p-2 text-sm">
+              <div className="min-w-0">
+                <p className="text-foreground">
+                  {vehicles.find((v) => v.id === suggestion.vehicleId)?.registrationNumber ??
+                    suggestion.vehicleId}
+                  {" · "}
+                  {drivers.find((d) => d.id === suggestion.driverId)?.name ?? suggestion.driverId}
+                </p>
+                <p className="mt-0.5 text-xs text-muted-foreground">{suggestion.rationale}</p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <span className="text-xs font-medium text-muted-foreground">
+                  {Math.round(suggestion.confidenceScore * 100)}% match
+                </span>
+                <Button type="button" size="sm" onClick={applySuggestion}>
+                  Apply
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-1.5">
           <Label htmlFor="source">Source</Label>
-          <Input id="source" placeholder="Pune" {...register("source")} />
-          {errors.source && <p className="text-xs text-destructive">{errors.source.message}</p>}
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="destination">Destination</Label>
-          <Input id="destination" placeholder="Mumbai" {...register("destination")} />
-          {errors.destination && (
-            <p className="text-xs text-destructive">{errors.destination.message}</p>
+          <Input
+            id="source"
+            placeholder="Pune"
+            aria-invalid={!!errors.source}
+            aria-describedby={errors.source ? "source-error" : undefined}
+            {...register("source")}
+          />
+          {errors.source && (
+            <p id="source-error" className="text-xs text-destructive">
+              {errors.source.message}
+            </p>
           )}
         </div>
 
         <div className="space-y-1.5">
-          <Label>Vehicle</Label>
+          <Label htmlFor="destination">Destination</Label>
+          <Input
+            id="destination"
+            placeholder="Mumbai"
+            aria-invalid={!!errors.destination}
+            aria-describedby={errors.destination ? "destination-error" : undefined}
+            {...register("destination")}
+          />
+          {errors.destination && (
+            <p id="destination-error" className="text-xs text-destructive">
+              {errors.destination.message}
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="vehicleId">Vehicle</Label>
           <Controller
             control={control}
             name="vehicleId"
             render={({ field }) => (
               <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger
+                  id="vehicleId"
+                  className="w-full"
+                  aria-invalid={!!errors.vehicleId}
+                  aria-describedby={errors.vehicleId ? "vehicleId-error" : undefined}
+                >
                   <SelectValue>
                     {(value: string) =>
                       vehicles.find((v) => v.id === value)?.registrationNumber ??
@@ -113,17 +218,26 @@ export function TripForm({ submitLabel, onSubmit }: TripFormProps) {
               </Select>
             )}
           />
-          {errors.vehicleId && <p className="text-xs text-destructive">{errors.vehicleId.message}</p>}
+          {errors.vehicleId && (
+            <p id="vehicleId-error" className="text-xs text-destructive">
+              {errors.vehicleId.message}
+            </p>
+          )}
         </div>
 
         <div className="space-y-1.5">
-          <Label>Driver</Label>
+          <Label htmlFor="driverId">Driver</Label>
           <Controller
             control={control}
             name="driverId"
             render={({ field }) => (
               <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger
+                  id="driverId"
+                  className="w-full"
+                  aria-invalid={!!errors.driverId}
+                  aria-describedby={errors.driverId ? "driverId-error" : undefined}
+                >
                   <SelectValue>
                     {(value: string) =>
                       drivers.find((d) => d.id === value)?.name ??
@@ -141,7 +255,11 @@ export function TripForm({ submitLabel, onSubmit }: TripFormProps) {
               </Select>
             )}
           />
-          {errors.driverId && <p className="text-xs text-destructive">{errors.driverId.message}</p>}
+          {errors.driverId && (
+            <p id="driverId-error" className="text-xs text-destructive">
+              {errors.driverId.message}
+            </p>
+          )}
         </div>
 
         <div className="space-y-1.5">
@@ -150,10 +268,14 @@ export function TripForm({ submitLabel, onSubmit }: TripFormProps) {
             id="cargoWeightKg"
             type="number"
             step="0.01"
+            aria-invalid={!!errors.cargoWeightKg}
+            aria-describedby={errors.cargoWeightKg ? "cargoWeightKg-error" : undefined}
             {...register("cargoWeightKg", { valueAsNumber: true })}
           />
           {errors.cargoWeightKg && (
-            <p className="text-xs text-destructive">{errors.cargoWeightKg.message}</p>
+            <p id="cargoWeightKg-error" className="text-xs text-destructive">
+              {errors.cargoWeightKg.message}
+            </p>
           )}
         </div>
 
@@ -163,10 +285,14 @@ export function TripForm({ submitLabel, onSubmit }: TripFormProps) {
             id="plannedDistanceKm"
             type="number"
             step="0.01"
+            aria-invalid={!!errors.plannedDistanceKm}
+            aria-describedby={errors.plannedDistanceKm ? "plannedDistanceKm-error" : undefined}
             {...register("plannedDistanceKm", { valueAsNumber: true })}
           />
           {errors.plannedDistanceKm && (
-            <p className="text-xs text-destructive">{errors.plannedDistanceKm.message}</p>
+            <p id="plannedDistanceKm-error" className="text-xs text-destructive">
+              {errors.plannedDistanceKm.message}
+            </p>
           )}
         </div>
       </div>

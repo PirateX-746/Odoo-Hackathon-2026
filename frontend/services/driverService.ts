@@ -13,7 +13,8 @@ export async function listDrivers(
   const res = await apiGet<PaginatedResult<Driver>>("/drivers", {
     params: params as Record<string, string | number | boolean | undefined>,
   });
-  return res.data ?? emptyPage<Driver>();
+  if (!res.data) throw new Error(res.error ?? "Failed to load drivers.");
+  return res.data;
 }
 
 export async function listAllDrivers(): Promise<Driver[]> {
@@ -23,7 +24,8 @@ export async function listAllDrivers(): Promise<Driver[]> {
 
 export async function listDispatchEligibleDrivers(): Promise<Driver[]> {
   const res = await apiGet<Driver[]>("/drivers/dispatch-eligible");
-  return res.data ?? [];
+  if (!res.data) throw new Error(res.error ?? "Failed to load eligible drivers.");
+  return res.data;
 }
 
 export async function getDriver(id: string): Promise<Driver | null> {

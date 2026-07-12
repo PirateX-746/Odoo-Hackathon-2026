@@ -23,13 +23,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/app/_components/ui/StatusBadge";
 import { PaginationControls } from "@/app/_components/ui/PaginationControls";
 import { DeleteConfirmDialog } from "@/app/_components/ui/DeleteConfirmDialog";
+import { TableSkeletonRows } from "@/app/_components/ui/TableSkeleton";
 import { usePaginatedList } from "@/app/_hooks/usePaginatedList";
 import { useAuth } from "@/libs/auth";
-import { CAN_DELETE_DRIVERS, CAN_MANAGE_DRIVERS, DRIVER_STATUS, EXPIRY_WARNING_WINDOW_DAYS } from "@/libs/constant";
+import {
+  CAN_DELETE_DRIVERS,
+  CAN_MANAGE_DRIVERS,
+  DRIVER_STATUS,
+  EXPIRY_WARNING_WINDOW_DAYS,
+} from "@/libs/constant";
 import { listDrivers, deleteDriver, type DriverListParams } from "@/services/driverService";
 import { formatDate } from "@/libs/helper";
 import type { Driver } from "@/types/driver";
@@ -74,8 +79,10 @@ export default function DriversPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold text-foreground">Drivers</h1>
-          <p className="text-sm text-muted-foreground">Manage driver profiles and license status.</p>
+          <h1 className="text-foreground text-xl font-semibold">Drivers</h1>
+          <p className="text-muted-foreground text-sm">
+            Manage driver profiles and license status.
+          </p>
         </div>
         {canManage && (
           <Button render={<Link href="/drivers/new" />} nativeButton={false}>
@@ -87,7 +94,7 @@ export default function DriversPage() {
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <div className="relative flex-1 sm:max-w-xs">
-          <Search className="absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+          <Search className="text-muted-foreground absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2" />
           <Input
             placeholder="Search name or license…"
             className="pl-8"
@@ -116,30 +123,28 @@ export default function DriversPage() {
       </div>
 
       <Card className="p-0">
-        {loading ? (
-          <div className="space-y-2 p-4">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} className="h-9 w-full" />
-            ))}
-          </div>
-        ) : data.length === 0 ? (
-          <p className="py-12 text-center text-sm text-muted-foreground">
-            No drivers match your filters.
-          </p>
-        ) : (
-          <Table>
-            <TableHeader>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="pl-4">Name</TableHead>
+              <TableHead>License #</TableHead>
+              <TableHead>License expiry</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Safety score</TableHead>
+              <TableHead className="pr-4 text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableSkeletonRows columns={6} />
+            ) : data.length === 0 ? (
               <TableRow>
-                <TableHead className="pl-4">Name</TableHead>
-                <TableHead>License #</TableHead>
-                <TableHead>License expiry</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Safety score</TableHead>
-                <TableHead className="pr-4 text-right">Actions</TableHead>
+                <TableCell colSpan={6} className="text-muted-foreground py-12 text-center text-sm">
+                  No drivers match your filters.
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.map((d) => {
+            ) : (
+              data.map((d) => {
                 const daysRemaining = differenceInCalendarDays(
                   new Date(d.licenseExpiryDate),
                   new Date(),
@@ -148,7 +153,7 @@ export default function DriversPage() {
                 return (
                   <TableRow key={d.id}>
                     <TableCell className="pl-4 text-sm font-medium">{d.name}</TableCell>
-                    <TableCell className="font-mono text-xs text-muted-foreground">
+                    <TableCell className="text-muted-foreground font-mono text-xs">
                       {d.licenseNumber}
                     </TableCell>
                     <TableCell
@@ -163,8 +168,13 @@ export default function DriversPage() {
                       {d.safetyScore}
                     </TableCell>
                     <TableCell className="pr-4">
-                      <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="icon-sm" render={<Link href={`/drivers/${d.id}`} />} nativeButton={false}>
+                      <div className="flex justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          render={<Link href={`/drivers/${d.id}`} />}
+                          nativeButton={false}
+                        >
                           <Eye className="size-4" />
                         </Button>
                         {canManage && (
@@ -181,7 +191,7 @@ export default function DriversPage() {
                           <DeleteConfirmDialog
                             trigger={
                               <Button variant="ghost" size="icon-sm">
-                                <Trash2 className="size-4 text-destructive" />
+                                <Trash2 className="text-destructive size-4" />
                               </Button>
                             }
                             title="Delete driver?"
@@ -193,12 +203,17 @@ export default function DriversPage() {
                     </TableCell>
                   </TableRow>
                 );
-              })}
-            </TableBody>
-          </Table>
-        )}
+              })
+            )}
+          </TableBody>
+        </Table>
         {!loading && data.length > 0 && (
-          <PaginationControls page={page} pageCount={pageCount} total={total} onPageChange={goToPage} />
+          <PaginationControls
+            page={page}
+            pageCount={pageCount}
+            total={total}
+            onPageChange={goToPage}
+          />
         )}
       </Card>
     </div>
