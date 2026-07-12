@@ -22,7 +22,15 @@
 
 # misc
 .DS_Store
+Thumbs.db
 *.pem
+.turbo
+.cache
+
+# editor
+.vscode/*
+!.vscode/extensions.json
+.idea
 
 # debug
 npm-debug.log*
