@@ -19,6 +19,8 @@ import { TripsModule } from './trips/trips.module';
 import { MaintenanceModule } from './maintenance/maintenance.module';
 import { FuelLogsModule } from './fuel-logs/fuel-logs.module';
 import { ExpensesModule } from './expenses/expenses.module';
+import { ReportsModule } from './reports/reports.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -56,6 +58,8 @@ import { ExpensesModule } from './expenses/expenses.module';
     MaintenanceModule,
     FuelLogsModule,
     ExpensesModule,
+    ReportsModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [
