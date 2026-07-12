@@ -51,9 +51,17 @@ npm run docs:generate
 
 - `prisma/schema.prisma` — data model (Users/RBAC, Vehicles, Drivers, Trips, MaintenanceLogs, FuelLogs, Expenses)
 - `prisma/seed.ts` — idempotent demo data covering every status/role combination
-- `src/<module>/` — one NestJS module per resource (`auth`, `users`, `vehicles`, `drivers`, `trips`, `maintenance`, `fuel-logs`, `expenses`, `reports`, `dashboard`), each with its own controller/service/DTOs
+- `src/<module>/` — one NestJS module per resource (`auth`, `users`, `vehicles`, `drivers`, `trips`, `maintenance`, `fuel-logs`, `expenses`, `reports`, `dashboard`, `insights`, `dispatch-assistant`), each with its own controller/service/DTOs
 - `src/common/` — shared guards (`JwtAuthGuard`, `RolesGuard`), decorators (`@Public()`, `@Roles()`, `@CurrentUser()`), exception filters, pagination helpers
 - `src/prisma/prisma.service.ts` — Prisma Client wired to the `@prisma/adapter-pg` driver adapter (required by Prisma 7)
+- `src/ai/anthropic.service.ts` — shared Claude API wrapper used by the AI features below
+
+## AI features
+
+Two advisory features built on the Anthropic API (`@anthropic-ai/sdk`, model `claude-opus-4-8`), both read-only and both requiring `ANTHROPIC_API_KEY` in `.env` — without it, they return `503 Service Unavailable` and the rest of the app is unaffected:
+
+- **`GET /api/insights/summary`** (accepts the same `region`/`type`/`status` filters as Reports/Dashboard) — a natural-language executive summary generated from live KPI and vehicle-report data. Cached for 60s.
+- **`GET /api/trips/dispatch/recommendations?source=&destination=&cargoWeightKg=&plannedDistanceKm=&region=`** — recommends up to 3 vehicle+driver pairings for a prospective trip, each with a rationale. The candidate pool is filtered deterministically in code (dispatch-eligible + sufficient capacity) before the model ever sees it, and the model's response is re-validated against that same candidate set before being returned — the AI can rank and explain, but it can never surface an infeasible pairing. It does not create or dispatch a trip; that still goes through the normal `POST /api/trips` flow and its full business-rule validation.
 
 ## Business rules enforced
 

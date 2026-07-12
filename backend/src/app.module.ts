@@ -21,6 +21,9 @@ import { FuelLogsModule } from './fuel-logs/fuel-logs.module';
 import { ExpensesModule } from './expenses/expenses.module';
 import { ReportsModule } from './reports/reports.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { AiModule } from './ai/ai.module';
+import { InsightsModule } from './insights/insights.module';
+import { DispatchAssistantModule } from './dispatch-assistant/dispatch-assistant.module';
 
 @Module({
   imports: [
@@ -60,6 +63,9 @@ import { DashboardModule } from './dashboard/dashboard.module';
     ExpensesModule,
     ReportsModule,
     DashboardModule,
+    AiModule,
+    InsightsModule,
+    DispatchAssistantModule,
   ],
   controllers: [AppController],
   providers: [

@@ -1802,6 +1802,135 @@
           "Dashboard"
         ]
       }
+    },
+    "/insights/summary": {
+      "get": {
+        "operationId": "InsightsController_getSummary",
+        "parameters": [
+          {
+            "name": "region",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "AVAILABLE",
+                "ON_TRIP",
+                "IN_SHOP",
+                "RETIRED"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InsightsSummaryDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "tags": [
+          "Insights"
+        ]
+      }
+    },
+    "/trips/dispatch/recommendations": {
+      "get": {
+        "operationId": "DispatchAssistantController_getRecommendations",
+        "parameters": [
+          {
+            "name": "source",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "example": "Pune",
+              "type": "string"
+            }
+          },
+          {
+            "name": "destination",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "example": "Mumbai",
+              "type": "string"
+            }
+          },
+          {
+            "name": "cargoWeightKg",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "example": 450,
+              "type": "number"
+            }
+          },
+          {
+            "name": "plannedDistanceKm",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "example": 150,
+              "type": "number"
+            }
+          },
+          {
+            "name": "region",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "example": "North",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DispatchRecommendationsDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "access-token": []
+          }
+        ],
+        "tags": [
+          "Dispatch Assistant"
+        ]
+      }
     }
   },
   "info": {
@@ -1853,6 +1982,14 @@
     },
     {
       "name": "Dashboard",
+      "description": ""
+    },
+    {
+      "name": "Insights",
+      "description": ""
+    },
+    {
+      "name": "Dispatch Assistant",
       "description": ""
     }
   ],
@@ -2499,6 +2636,83 @@
           "pendingTrips",
           "driversOnDuty",
           "fleetUtilizationPercent"
+        ]
+      },
+      "InsightsSummaryDto": {
+        "type": "object",
+        "properties": {
+          "headline": {
+            "type": "string",
+            "description": "One-sentence headline capturing the overall fleet state"
+          },
+          "highlights": {
+            "description": "Notable positive or neutral observations",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "risks": {
+            "description": "Notable risks or issues that need attention",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "recommendations": {
+            "description": "Suggested next actions",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "generatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "headline",
+          "highlights",
+          "risks",
+          "recommendations",
+          "generatedAt"
+        ]
+      },
+      "DispatchRecommendationItemDto": {
+        "type": "object",
+        "properties": {
+          "vehicleId": {
+            "type": "string"
+          },
+          "driverId": {
+            "type": "string"
+          },
+          "rationale": {
+            "type": "string"
+          },
+          "confidenceScore": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "vehicleId",
+          "driverId",
+          "rationale",
+          "confidenceScore"
+        ]
+      },
+      "DispatchRecommendationsDto": {
+        "type": "object",
+        "properties": {
+          "recommendations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DispatchRecommendationItemDto"
+            }
+          }
+        },
+        "required": [
+          "recommendations"
         ]
       }
     }
