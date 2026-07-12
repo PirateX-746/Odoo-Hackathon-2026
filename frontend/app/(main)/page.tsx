@@ -16,14 +16,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  getFleetSummary,
-  getExpiryAlerts,
-  type ExpiryAlert,
-  type FleetSummary,
-} from "@/services/fleetService";
+import { getExpiryAlerts, type ExpiryAlert } from "@/services/fleetService";
+import { getDashboardKpis, type DashboardKpis } from "@/services/dashboardService";
 import { listAllVehicles } from "@/services/vehicleService";
 import { listAllDrivers } from "@/services/driverService";
+import { listAllTrips } from "@/services/tripService";
+import { TRIP_STATUS } from "@/libs/constant";
 import type { Vehicle } from "@/types/vehicle";
 import type { Driver } from "@/types/driver";
 import { useAuth } from "@/libs/auth";
@@ -31,25 +29,30 @@ import { getDisplayNameFromEmail } from "@/libs/helper";
 
 export default function DashboardPage() {
   const { user } = useAuth();
-  const [summary, setSummary] = useState<FleetSummary | null>(null);
+  const [kpis, setKpis] = useState<DashboardKpis | null>(null);
   const [alerts, setAlerts] = useState<ExpiryAlert[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [driverByVehicleId, setDriverByVehicleId] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let active = true;
     Promise.all([
-      getFleetSummary(),
+      getDashboardKpis(),
       getExpiryAlerts(),
       listAllVehicles(),
       listAllDrivers(),
-    ]).then(([s, a, v, d]) => {
+      listAllTrips({ status: TRIP_STATUS.DISPATCHED }),
+    ]).then(([k, a, v, d, trips]) => {
       if (!active) return;
-      setSummary(s);
+      setKpis(k);
       setAlerts(a);
       setVehicles(v);
       setDrivers(d);
+      setDriverByVehicleId(
+        Object.fromEntries(trips.map((t) => [t.vehicleId, t.driverId])),
+      );
       setLoading(false);
     });
     return () => {
@@ -57,8 +60,10 @@ export default function DashboardPage() {
     };
   }, []);
 
-  const driverName = (id: string | null) =>
-    drivers.find((d) => d.id === id)?.name ?? "Unassigned";
+  const driverName = (vehicleId: string) => {
+    const driverId = driverByVehicleId[vehicleId];
+    return drivers.find((d) => d.id === driverId)?.name ?? "Unassigned";
+  };
 
   return (
     <div className="space-y-6">
@@ -72,29 +77,29 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {loading || !summary
+        {loading || !kpis
           ? Array.from({ length: 4 }).map((_, i) => (
               <Skeleton key={i} className="h-28 rounded-lg" />
             ))
           : [
-              <GaugeTile key="active" label="Active Vehicles" value={String(summary.activeVehicles)} icon={Truck} index={0} />,
+              <GaugeTile key="active" label="Active Vehicles" value={String(kpis.activeVehicles)} icon={Truck} index={0} />,
               <GaugeTile
                 key="inshop"
                 label="In Shop"
-                value={String(summary.inShopVehicles)}
+                value={String(kpis.vehiclesInMaintenance)}
                 icon={Wrench}
                 index={1}
-                tone={summary.inShopVehicles > 0 ? "warn" : "default"}
+                tone={kpis.vehiclesInMaintenance > 0 ? "warn" : "default"}
               />,
               <GaugeTile
                 key="expiring"
-                label="Expiring Docs"
-                value={String(summary.expiringDocs)}
+                label="Expiring Licenses"
+                value={String(alerts.length)}
                 icon={AlertTriangle}
                 index={2}
-                tone={summary.expiringDocs > 0 ? "critical" : "default"}
+                tone={alerts.length > 0 ? "critical" : "default"}
               />,
-              <GaugeTile key="trips" label="Active Trips" value={String(summary.activeTrips)} icon={Route} index={3} />,
+              <GaugeTile key="trips" label="Active Trips" value={String(kpis.activeTrips)} icon={Route} index={3} />,
             ]}
       </div>
 
@@ -135,7 +140,7 @@ export default function DashboardPage() {
                         <StatusBadge status={v.status} />
                       </TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {driverName(v.assignedDriverId)}
+                        {driverName(v.id)}
                       </TableCell>
                       <TableCell className="pr-4 text-right font-mono text-sm tabular-nums">
                         {v.odometerKm.toLocaleString("en-IN")} km

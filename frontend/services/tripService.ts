@@ -16,8 +16,8 @@ export async function listTrips(params: TripListParams = {}): Promise<PaginatedR
   return res.data ?? emptyPage<Trip>();
 }
 
-export async function listAllTrips(): Promise<Trip[]> {
-  const res = await listTrips({ limit: 100 });
+export async function listAllTrips(params: Partial<TripListParams> = {}): Promise<Trip[]> {
+  const res = await listTrips({ ...params, limit: 100 });
   return res.data;
 }
 

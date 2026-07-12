@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, Search, Eye, Pencil, Trash2 } from "lucide-react";
+import { Plus, Search, Eye, Send, Ban } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,31 +25,33 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/app/_components/ui/StatusBadge";
 import { PaginationControls } from "@/app/_components/ui/PaginationControls";
-import { DeleteConfirmDialog } from "@/app/_components/ui/DeleteConfirmDialog";
 import { usePaginatedList } from "@/app/_hooks/usePaginatedList";
-import { TRIP_STATUS } from "@/libs/constant";
-import { listTrips, deleteTrip, type TripListParams } from "@/services/tripService";
+import { CAN_MANAGE_TRIPS, TRIP_STATUS } from "@/libs/constant";
+import { listTrips, dispatchTrip, cancelTrip, type TripListParams } from "@/services/tripService";
 import { listAllVehicles } from "@/services/vehicleService";
 import { listAllDrivers } from "@/services/driverService";
-import { formatDate } from "@/libs/helper";
+import { formatDate, extractErrorMessage } from "@/libs/helper";
+import { useAuth } from "@/libs/auth";
 import type { Trip } from "@/types/trip";
 import type { Vehicle } from "@/types/vehicle";
 import type { Driver } from "@/types/driver";
 
 const ALL_STATUS = "__all__";
 const STATUS_LABELS: Record<string, string> = {
-  SCHEDULED: "Scheduled",
-  IN_PROGRESS: "In Progress",
+  DRAFT: "Draft",
+  DISPATCHED: "Dispatched",
   COMPLETED: "Completed",
   CANCELLED: "Cancelled",
 };
 
 export default function TripsPage() {
+  const { user } = useAuth();
   const { data, total, loading, params, page, pageCount, updateParams, goToPage, refetch } =
     usePaginatedList<Trip, TripListParams>(listTrips);
   const [searchInput, setSearchInput] = useState("");
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [actionPendingId, setActionPendingId] = useState<string | null>(null);
 
   useEffect(() => {
     listAllVehicles().then(setVehicles);
@@ -71,33 +73,54 @@ export default function TripsPage() {
     [drivers],
   );
 
-  const handleDelete = useCallback(
-    async (id: string) => {
-      await deleteTrip(id);
-      toast.success("Trip deleted");
+  const canManage = Boolean(user && CAN_MANAGE_TRIPS.includes(user.role));
+
+  const handleDispatch = async (id: string) => {
+    setActionPendingId(id);
+    try {
+      await dispatchTrip(id);
+      toast.success("Trip dispatched");
       refetch();
-    },
-    [refetch],
-  );
+    } catch (err) {
+      toast.error(extractErrorMessage(err));
+    } finally {
+      setActionPendingId(null);
+    }
+  };
+
+  const handleCancel = async (id: string) => {
+    setActionPendingId(id);
+    try {
+      await cancelTrip(id);
+      toast.success("Trip cancelled");
+      refetch();
+    } catch (err) {
+      toast.error(extractErrorMessage(err));
+    } finally {
+      setActionPendingId(null);
+    }
+  };
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold text-foreground">Trips</h1>
-          <p className="text-sm text-muted-foreground">Schedule and track dispatch trips.</p>
+          <p className="text-sm text-muted-foreground">Dispatch and track fleet trips.</p>
         </div>
-        <Button render={<Link href="/trips/new" />} nativeButton={false}>
-          <Plus className="size-4" />
-          New Trip
-        </Button>
+        {canManage && (
+          <Button render={<Link href="/trips/new" />} nativeButton={false}>
+            <Plus className="size-4" />
+            New Trip
+          </Button>
+        )}
       </div>
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <div className="relative flex-1 sm:max-w-xs">
           <Search className="absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search trip code, origin, destination…"
+            placeholder="Search source or destination…"
             className="pl-8"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
@@ -138,11 +161,10 @@ export default function TripsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="pl-4">Trip</TableHead>
-                <TableHead>Route</TableHead>
+                <TableHead className="pl-4">Route</TableHead>
                 <TableHead>Vehicle</TableHead>
                 <TableHead>Driver</TableHead>
-                <TableHead>Scheduled</TableHead>
+                <TableHead>Created</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="pr-4 text-right">Actions</TableHead>
               </TableRow>
@@ -150,21 +172,15 @@ export default function TripsPage() {
             <TableBody>
               {data.map((t) => (
                 <TableRow key={t.id}>
-                  <TableCell className="pl-4 font-mono text-sm">{t.tripCode}</TableCell>
-                  <TableCell className="text-sm">
-                    {t.origin} <span className="text-muted-foreground">→</span> {t.destination}
+                  <TableCell className="pl-4 text-sm">
+                    {t.source} <span className="text-muted-foreground">→</span> {t.destination}
                   </TableCell>
                   <TableCell className="font-mono text-xs text-muted-foreground">
                     {vehiclePlate(t.vehicleId)}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">{driverName(t.driverId)}</TableCell>
                   <TableCell className="text-xs text-muted-foreground">
-                    {formatDate(t.scheduledStart, "en-IN", {
-                      month: "short",
-                      day: "2-digit",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                    {formatDate(t.createdAt)}
                   </TableCell>
                   <TableCell>
                     <StatusBadge status={t.status} />
@@ -174,24 +190,29 @@ export default function TripsPage() {
                       <Button variant="ghost" size="icon-sm" render={<Link href={`/trips/${t.id}`} />} nativeButton={false}>
                         <Eye className="size-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        render={<Link href={`/trips/${t.id}/edit`} />}
-                        nativeButton={false}
-                      >
-                        <Pencil className="size-4" />
-                      </Button>
-                      <DeleteConfirmDialog
-                        trigger={
-                          <Button variant="ghost" size="icon-sm">
-                            <Trash2 className="size-4 text-destructive" />
+                      {canManage && t.status === TRIP_STATUS.DRAFT && (
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          disabled={actionPendingId === t.id}
+                          onClick={() => handleDispatch(t.id)}
+                          aria-label="Dispatch trip"
+                        >
+                          <Send className="size-4" />
+                        </Button>
+                      )}
+                      {canManage &&
+                        (t.status === TRIP_STATUS.DRAFT || t.status === TRIP_STATUS.DISPATCHED) && (
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            disabled={actionPendingId === t.id}
+                            onClick={() => handleCancel(t.id)}
+                            aria-label="Cancel trip"
+                          >
+                            <Ban className="size-4 text-destructive" />
                           </Button>
-                        }
-                        title="Delete trip?"
-                        description={`This will permanently remove ${t.tripCode}.`}
-                        onConfirm={() => handleDelete(t.id)}
-                      />
+                        )}
                     </div>
                   </TableCell>
                 </TableRow>

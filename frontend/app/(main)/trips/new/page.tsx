@@ -5,15 +5,20 @@ import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
 import { TripForm } from "../_components/TripForm";
 import { createTrip } from "@/services/tripService";
-import type { TripInput } from "@/types/trip";
+import type { CreateTripInput } from "@/types/trip";
+import { extractErrorMessage } from "@/libs/helper";
 
 export default function NewTripPage() {
   const router = useRouter();
 
-  const handleSubmit = async (values: TripInput) => {
-    const trip = await createTrip(values);
-    toast.success("Trip created");
-    router.push(`/trips/${trip.id}`);
+  const handleSubmit = async (values: CreateTripInput) => {
+    try {
+      const trip = await createTrip(values);
+      toast.success("Trip created");
+      router.push(`/trips/${trip.id}`);
+    } catch (err) {
+      toast.error(extractErrorMessage(err));
+    }
   };
 
   return (

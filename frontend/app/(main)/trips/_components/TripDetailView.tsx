@@ -3,25 +3,31 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Pencil, ArrowLeft } from "lucide-react";
+import { ArrowLeft, Ban, CheckCircle2, Send } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/app/_components/ui/StatusBadge";
-import { getTrip } from "@/services/tripService";
+import { CompleteTripDialog } from "./CompleteTripDialog";
+import { cancelTrip, dispatchTrip, completeTrip, getTrip } from "@/services/tripService";
 import { getVehicle } from "@/services/vehicleService";
 import { getDriver } from "@/services/driverService";
-import type { Trip } from "@/types/trip";
+import type { CompleteTripInput, Trip } from "@/types/trip";
 import type { Vehicle } from "@/types/vehicle";
 import type { Driver } from "@/types/driver";
-import { formatDate } from "@/libs/helper";
+import { formatDate, extractErrorMessage } from "@/libs/helper";
+import { useAuth } from "@/libs/auth";
+import { CAN_COMPLETE_TRIPS, CAN_MANAGE_TRIPS, TRIP_STATUS } from "@/libs/constant";
 
 export function TripDetailView({ id }: { id: string }) {
+  const { user } = useAuth();
   const [trip, setTrip] = useState<Trip | null>(null);
   const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [driver, setDriver] = useState<Driver | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFoundState, setNotFoundState] = useState(false);
+  const [actionPending, setActionPending] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -56,6 +62,43 @@ export function TripDetailView({ id }: { id: string }) {
     );
   }
 
+  const canManage = Boolean(user && CAN_MANAGE_TRIPS.includes(user.role));
+  const canComplete = Boolean(user && CAN_COMPLETE_TRIPS.includes(user.role));
+
+  const handleDispatch = async () => {
+    setActionPending(true);
+    try {
+      setTrip(await dispatchTrip(trip.id));
+      toast.success("Trip dispatched");
+    } catch (err) {
+      toast.error(extractErrorMessage(err));
+    } finally {
+      setActionPending(false);
+    }
+  };
+
+  const handleCancel = async () => {
+    setActionPending(true);
+    try {
+      setTrip(await cancelTrip(trip.id));
+      toast.success("Trip cancelled");
+    } catch (err) {
+      toast.error(extractErrorMessage(err));
+    } finally {
+      setActionPending(false);
+    }
+  };
+
+  const handleComplete = async (values: CompleteTripInput) => {
+    try {
+      setTrip(await completeTrip(trip.id, values));
+      toast.success("Trip completed");
+    } catch (err) {
+      toast.error(extractErrorMessage(err));
+      throw err;
+    }
+  };
+
   return (
     <div className="max-w-3xl space-y-4">
       <div className="flex items-center justify-between gap-3">
@@ -64,16 +107,48 @@ export function TripDetailView({ id }: { id: string }) {
             <ArrowLeft className="size-4" />
           </Button>
           <div>
-            <h1 className="font-mono text-xl font-semibold text-foreground">{trip.tripCode}</h1>
-            <p className="text-sm text-muted-foreground">
-              {trip.origin} → {trip.destination}
-            </p>
+            <h1 className="text-xl font-semibold text-foreground">
+              {trip.source} <span className="text-muted-foreground">→</span> {trip.destination}
+            </h1>
+            <p className="text-sm text-muted-foreground">Created {formatDate(trip.createdAt)}</p>
           </div>
         </div>
-        <Button render={<Link href={`/trips/${trip.id}/edit`} />} nativeButton={false}>
-          <Pencil className="size-4" />
-          Edit
-        </Button>
+        <div className="flex gap-2">
+          {trip.status === TRIP_STATUS.DRAFT && canManage && (
+            <>
+              <Button variant="outline" onClick={handleCancel} disabled={actionPending}>
+                <Ban className="size-4" />
+                Cancel
+              </Button>
+              <Button onClick={handleDispatch} disabled={actionPending}>
+                <Send className="size-4" />
+                Dispatch
+              </Button>
+            </>
+          )}
+          {trip.status === TRIP_STATUS.DISPATCHED && (
+            <>
+              {canManage && (
+                <Button variant="outline" onClick={handleCancel} disabled={actionPending}>
+                  <Ban className="size-4" />
+                  Cancel
+                </Button>
+              )}
+              {canComplete && trip.startOdometerKm !== null && (
+                <CompleteTripDialog
+                  startOdometerKm={trip.startOdometerKm}
+                  onSubmit={handleComplete}
+                  trigger={
+                    <Button>
+                      <CheckCircle2 className="size-4" />
+                      Complete
+                    </Button>
+                  }
+                />
+              )}
+            </>
+          )}
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
@@ -120,39 +195,58 @@ export function TripDetailView({ id }: { id: string }) {
       <Card>
         <CardContent className="grid grid-cols-2 gap-4 pt-4 sm:grid-cols-3">
           <div>
-            <p className="text-xs text-muted-foreground uppercase">Scheduled start</p>
-            <p className="mt-1 text-sm">
-              {formatDate(trip.scheduledStart, "en-IN", {
-                month: "short",
-                day: "2-digit",
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </p>
+            <p className="text-xs text-muted-foreground uppercase">Cargo weight</p>
+            <p className="mt-1 font-mono text-sm">{trip.cargoWeightKg} kg</p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground uppercase">Scheduled end</p>
-            <p className="mt-1 text-sm">
-              {formatDate(trip.scheduledEnd, "en-IN", {
-                month: "short",
-                day: "2-digit",
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </p>
+            <p className="text-xs text-muted-foreground uppercase">Planned distance</p>
+            <p className="mt-1 font-mono text-sm">{trip.plannedDistanceKm} km</p>
           </div>
           <div>
-            <p className="text-xs text-muted-foreground uppercase">Distance</p>
+            <p className="text-xs text-muted-foreground uppercase">Actual distance</p>
             <p className="mt-1 font-mono text-sm">
-              {trip.distanceKm != null ? `${trip.distanceKm} km` : "—"}
+              {trip.actualDistanceKm != null ? `${trip.actualDistanceKm} km` : "—"}
             </p>
           </div>
-          {trip.notes && (
-            <div className="col-span-2 sm:col-span-3">
-              <p className="text-xs text-muted-foreground uppercase">Notes</p>
-              <p className="mt-1 text-sm text-foreground">{trip.notes}</p>
-            </div>
-          )}
+          <div>
+            <p className="text-xs text-muted-foreground uppercase">Start odometer</p>
+            <p className="mt-1 font-mono text-sm">
+              {trip.startOdometerKm != null ? `${trip.startOdometerKm} km` : "—"}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground uppercase">End odometer</p>
+            <p className="mt-1 font-mono text-sm">
+              {trip.endOdometerKm != null ? `${trip.endOdometerKm} km` : "—"}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground uppercase">Fuel consumed</p>
+            <p className="mt-1 font-mono text-sm">
+              {trip.fuelConsumedLiters != null ? `${trip.fuelConsumedLiters} L` : "—"}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground uppercase">Revenue</p>
+            <p className="mt-1 font-mono text-sm">
+              {trip.revenue != null ? `₹${trip.revenue.toLocaleString("en-IN")}` : "—"}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground uppercase">Dispatched</p>
+            <p className="mt-1 text-sm">{trip.dispatchedAt ? formatDate(trip.dispatchedAt) : "—"}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground uppercase">
+              {trip.status === TRIP_STATUS.CANCELLED ? "Cancelled" : "Completed"}
+            </p>
+            <p className="mt-1 text-sm">
+              {(() => {
+                const stamp = trip.status === TRIP_STATUS.CANCELLED ? trip.cancelledAt : trip.completedAt;
+                return stamp ? formatDate(stamp) : "—";
+              })()}
+            </p>
+          </div>
         </CardContent>
       </Card>
     </div>
