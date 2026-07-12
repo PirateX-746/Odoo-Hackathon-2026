@@ -39,11 +39,18 @@ export default function UsersPage() {
 
   useEffect(() => {
     let active = true;
-    listUsers().then((data) => {
-      if (!active) return;
-      setUsers(data);
-      setLoading(false);
-    });
+    listUsers()
+      .then((data) => {
+        if (!active) return;
+        setUsers(data);
+      })
+      .catch((err) => {
+        if (!active) return;
+        toast.error(extractErrorMessage(err));
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
     return () => {
       active = false;
     };

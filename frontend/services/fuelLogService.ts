@@ -1,7 +1,7 @@
 import { apiDelete, apiGet, apiPatch, apiPost } from "@/libs/api";
 import type { FuelLog, FuelLogInput } from "@/types/fuelLog";
 import type { ListParams } from "@/app/_hooks/usePaginatedList";
-import { emptyPage, type PaginatedResult } from "./types";
+import type { PaginatedResult } from "./types";
 
 export interface FuelLogListParams extends ListParams {
   vehicleId?: string;
@@ -14,12 +14,14 @@ export async function listFuelLogs(
   const res = await apiGet<PaginatedResult<FuelLog>>("/fuel-logs", {
     params: params as Record<string, string | number | boolean | undefined>,
   });
-  return res.data ?? emptyPage<FuelLog>();
+  if (!res.data) throw new Error(res.error ?? "Failed to load fuel logs.");
+  return res.data;
 }
 
 export async function listFuelLogsForVehicle(vehicleId: string): Promise<FuelLog[]> {
   const res = await apiGet<FuelLog[]>(`/fuel-logs/vehicle/${vehicleId}`);
-  return res.data ?? [];
+  if (!res.data) throw new Error(res.error ?? "Failed to load fuel logs.");
+  return res.data;
 }
 
 export async function getFuelLog(id: string): Promise<FuelLog | null> {

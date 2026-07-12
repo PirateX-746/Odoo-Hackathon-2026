@@ -1,7 +1,7 @@
 import { apiGet, apiPost } from "@/libs/api";
 import type { CreateMaintenanceInput, MaintenanceLog, MaintenanceStatus } from "@/types/maintenance";
 import type { ListParams } from "@/app/_hooks/usePaginatedList";
-import { emptyPage, type PaginatedResult } from "./types";
+import type { PaginatedResult } from "./types";
 
 export interface MaintenanceListParams extends ListParams {
   vehicleId?: string;
@@ -14,12 +14,14 @@ export async function listMaintenanceLogs(
   const res = await apiGet<PaginatedResult<MaintenanceLog>>("/maintenance", {
     params: params as Record<string, string | number | boolean | undefined>,
   });
-  return res.data ?? emptyPage<MaintenanceLog>();
+  if (!res.data) throw new Error(res.error ?? "Failed to load maintenance logs.");
+  return res.data;
 }
 
 export async function listMaintenanceForVehicle(vehicleId: string): Promise<MaintenanceLog[]> {
   const res = await apiGet<MaintenanceLog[]>(`/maintenance/vehicle/${vehicleId}`);
-  return res.data ?? [];
+  if (!res.data) throw new Error(res.error ?? "Failed to load maintenance logs.");
+  return res.data;
 }
 
 export async function getMaintenanceLog(id: string): Promise<MaintenanceLog | null> {

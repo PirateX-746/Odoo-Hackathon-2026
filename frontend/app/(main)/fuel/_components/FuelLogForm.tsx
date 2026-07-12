@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +20,7 @@ import type { Vehicle } from "@/types/vehicle";
 import type { Trip } from "@/types/trip";
 import { listAllVehicles } from "@/services/vehicleService";
 import { listAllTrips } from "@/services/tripService";
+import { extractErrorMessage } from "@/libs/helper";
 
 const NO_TRIP = "__none__";
 
@@ -43,8 +45,12 @@ export function FuelLogForm({ defaultValues, submitLabel, onSubmit }: FuelLogFor
   const [trips, setTrips] = useState<Trip[]>([]);
 
   useEffect(() => {
-    listAllVehicles().then(setVehicles);
-    listAllTrips().then(setTrips);
+    listAllVehicles()
+      .then(setVehicles)
+      .catch((err) => toast.error(extractErrorMessage(err)));
+    listAllTrips()
+      .then(setTrips)
+      .catch((err) => toast.error(extractErrorMessage(err)));
   }, []);
 
   const {

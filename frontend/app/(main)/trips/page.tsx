@@ -54,8 +54,12 @@ export default function TripsPage() {
   const [actionPendingId, setActionPendingId] = useState<string | null>(null);
 
   useEffect(() => {
-    listAllVehicles().then(setVehicles);
-    listAllDrivers().then(setDrivers);
+    listAllVehicles()
+      .then(setVehicles)
+      .catch((err) => toast.error(extractErrorMessage(err)));
+    listAllDrivers()
+      .then(setDrivers)
+      .catch((err) => toast.error(extractErrorMessage(err)));
   }, []);
 
   useEffect(() => {

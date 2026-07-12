@@ -3,7 +3,8 @@ import type { CreateUserInput, UpdateUserInput, User } from "@/types/user";
 
 export async function listUsers(): Promise<User[]> {
   const res = await apiGet<User[]>("/users");
-  return res.data ?? [];
+  if (!res.data) throw new Error(res.error ?? "Failed to load users.");
+  return res.data;
 }
 
 export async function getUser(id: string): Promise<User | null> {

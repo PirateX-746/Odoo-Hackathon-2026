@@ -1,7 +1,7 @@
 import { apiGet, apiPost } from "@/libs/api";
 import type { CompleteTripInput, CreateTripInput, Trip, TripStatus } from "@/types/trip";
 import type { ListParams } from "@/app/_hooks/usePaginatedList";
-import { emptyPage, type PaginatedResult } from "./types";
+import type { PaginatedResult } from "./types";
 
 export interface TripListParams extends ListParams {
   status?: TripStatus;
@@ -13,7 +13,8 @@ export async function listTrips(params: TripListParams = {}): Promise<PaginatedR
   const res = await apiGet<PaginatedResult<Trip>>("/trips", {
     params: params as Record<string, string | number | boolean | undefined>,
   });
-  return res.data ?? emptyPage<Trip>();
+  if (!res.data) throw new Error(res.error ?? "Failed to load trips.");
+  return res.data;
 }
 
 export async function listAllTrips(params: Partial<TripListParams> = {}): Promise<Trip[]> {

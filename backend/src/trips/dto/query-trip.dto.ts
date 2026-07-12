@@ -1,5 +1,5 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsUUID } from 'class-validator';
+import { IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import { PaginationQueryDto } from '@/common/dto/pagination-query.dto';
 import { TripStatus } from '@/generated/prisma/enums';
 
@@ -18,4 +18,12 @@ export class QueryTripDto extends PaginationQueryDto {
   @IsOptional()
   @IsUUID()
   driverId?: string;
+
+  @ApiPropertyOptional({
+    description: 'Case-insensitive match against source or destination',
+    example: 'Pune',
+  })
+  @IsOptional()
+  @IsString()
+  search?: string;
 }

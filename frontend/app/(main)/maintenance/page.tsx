@@ -51,7 +51,9 @@ export default function MaintenancePage() {
   const [closingId, setClosingId] = useState<string | null>(null);
 
   useEffect(() => {
-    listAllVehicles().then(setVehicles);
+    listAllVehicles()
+      .then(setVehicles)
+      .catch((err) => toast.error(extractErrorMessage(err)));
   }, []);
 
   const vehiclePlate = useCallback(

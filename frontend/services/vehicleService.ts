@@ -1,7 +1,7 @@
 import { apiDelete, apiGet, apiPatch, apiPost } from "@/libs/api";
 import type { Vehicle, VehicleInput, VehicleStatus } from "@/types/vehicle";
 import type { ListParams } from "@/app/_hooks/usePaginatedList";
-import { emptyPage, type PaginatedResult } from "./types";
+import type { PaginatedResult } from "./types";
 
 export interface VehicleListParams extends ListParams {
   status?: VehicleStatus;
@@ -15,7 +15,8 @@ export async function listVehicles(
   const res = await apiGet<PaginatedResult<Vehicle>>("/vehicles", {
     params: params as Record<string, string | number | boolean | undefined>,
   });
-  return res.data ?? emptyPage<Vehicle>();
+  if (!res.data) throw new Error(res.error ?? "Failed to load vehicles.");
+  return res.data;
 }
 
 export async function listAllVehicles(): Promise<Vehicle[]> {
@@ -25,7 +26,8 @@ export async function listAllVehicles(): Promise<Vehicle[]> {
 
 export async function listDispatchEligibleVehicles(): Promise<Vehicle[]> {
   const res = await apiGet<Vehicle[]>("/vehicles/dispatch-eligible");
-  return res.data ?? [];
+  if (!res.data) throw new Error(res.error ?? "Failed to load eligible vehicles.");
+  return res.data;
 }
 
 export async function getVehicle(id: string): Promise<Vehicle | null> {

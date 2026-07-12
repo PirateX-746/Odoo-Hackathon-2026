@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { DEFAULT_PAGE, DEFAULT_LIMIT } from "@/libs/constant";
 import type { PaginatedResult } from "@/services/types";
 
@@ -40,12 +41,17 @@ export function usePaginatedList<T, P extends ListParams = ListParams>(
 
   const refetch = useCallback(async () => {
     if (!hasLoadedOnce.current) setLoading(true);
-    const res = await fetcher(params as P);
-    setData(res.data);
-    setTotal(res.meta.total);
-    setPageCount(res.meta.totalPages);
-    hasLoadedOnce.current = true;
-    setLoading(false);
+    try {
+      const res = await fetcher(params as P);
+      setData(res.data);
+      setTotal(res.meta.total);
+      setPageCount(res.meta.totalPages);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to load data.");
+    } finally {
+      hasLoadedOnce.current = true;
+      setLoading(false);
+    }
   }, [fetcher, params]);
 
   useEffect(() => {

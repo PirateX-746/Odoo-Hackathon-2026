@@ -5,12 +5,14 @@ import { DriversService } from '@/drivers/drivers.service';
 import { RecommendDispatchDto } from './dto/recommend-dispatch.dto';
 import { DispatchRecommendationsDto } from './dto/dispatch-recommendation.dto';
 
+// Anthropic's structured-output schema validator rejects `maxItems` on array
+// types ("property 'maxItems' is not supported") — the "up to 3" cap is
+// enforced via the system prompt instead and re-checked in code below.
 const RECOMMENDATION_SCHEMA = {
   type: 'object',
   properties: {
     recommendations: {
       type: 'array',
-      maxItems: 3,
       items: {
         type: 'object',
         properties: {
@@ -101,11 +103,13 @@ export class DispatchAssistantService {
 
     // Defense in depth: never trust model-returned ids blindly — drop
     // anything that doesn't reference a real candidate from this request.
+    // The "up to 3" cap can no longer live in the schema (see comment above
+    // RECOMMENDATION_SCHEMA), so it's enforced here too.
     const vehicleIds = new Set(candidateVehicles.map((v) => v.id));
     const driverIds = new Set(eligibleDrivers.map((d) => d.id));
-    const recommendations = raw.recommendations.filter(
-      (r) => vehicleIds.has(r.vehicleId) && driverIds.has(r.driverId),
-    );
+    const recommendations = raw.recommendations
+      .filter((r) => vehicleIds.has(r.vehicleId) && driverIds.has(r.driverId))
+      .slice(0, 3);
 
     return { recommendations };
   }

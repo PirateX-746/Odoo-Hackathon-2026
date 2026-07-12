@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,6 +19,7 @@ import {
 import type { CreateMaintenanceInput } from "@/types/maintenance";
 import type { Vehicle } from "@/types/vehicle";
 import { listAllVehicles } from "@/services/vehicleService";
+import { extractErrorMessage } from "@/libs/helper";
 
 const maintenanceSchema = z.object({
   vehicleId: z.string().min(1, "Select a vehicle"),
@@ -37,7 +39,9 @@ export function MaintenanceForm({ submitLabel, onSubmit }: MaintenanceFormProps)
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
 
   useEffect(() => {
-    listAllVehicles().then(setVehicles);
+    listAllVehicles()
+      .then(setVehicles)
+      .catch((err) => toast.error(extractErrorMessage(err)));
   }, []);
 
   const {

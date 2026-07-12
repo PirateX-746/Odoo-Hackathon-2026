@@ -1,7 +1,7 @@
 import { apiDelete, apiGet, apiPatch, apiPost } from "@/libs/api";
 import type { Expense, ExpenseInput, ExpenseType } from "@/types/expense";
 import type { ListParams } from "@/app/_hooks/usePaginatedList";
-import { emptyPage, type PaginatedResult } from "./types";
+import type { PaginatedResult } from "./types";
 
 export interface ExpenseListParams extends ListParams {
   vehicleId?: string;
@@ -14,12 +14,14 @@ export async function listExpenses(
   const res = await apiGet<PaginatedResult<Expense>>("/expenses", {
     params: params as Record<string, string | number | boolean | undefined>,
   });
-  return res.data ?? emptyPage<Expense>();
+  if (!res.data) throw new Error(res.error ?? "Failed to load expenses.");
+  return res.data;
 }
 
 export async function listExpensesForVehicle(vehicleId: string): Promise<Expense[]> {
   const res = await apiGet<Expense[]>(`/expenses/vehicle/${vehicleId}`);
-  return res.data ?? [];
+  if (!res.data) throw new Error(res.error ?? "Failed to load expenses.");
+  return res.data;
 }
 
 export async function getExpense(id: string): Promise<Expense | null> {

@@ -12,7 +12,7 @@ import {
   paginationSkipTake,
   type PaginatedResult,
 } from '@/common/dto/pagination-query.dto';
-import type { Trip } from '@/generated/prisma/client';
+import type { Prisma, Trip } from '@/generated/prisma/client';
 import type { AuthenticatedUser } from '@/common/interfaces/jwt-payload.interface';
 import { CreateTripDto } from './dto/create-trip.dto';
 import { CompleteTripDto } from './dto/complete-trip.dto';
@@ -63,10 +63,18 @@ export class TripsService {
   }
 
   async findAll(query: QueryTripDto): Promise<PaginatedResult<Trip>> {
-    const where = {
+    const where: Prisma.TripWhereInput = {
       ...(query.status ? { status: query.status } : {}),
       ...(query.vehicleId ? { vehicleId: query.vehicleId } : {}),
       ...(query.driverId ? { driverId: query.driverId } : {}),
+      ...(query.search
+        ? {
+            OR: [
+              { source: { contains: query.search, mode: 'insensitive' } },
+              { destination: { contains: query.search, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
     };
     const { skip, take } = paginationSkipTake(query);
     const [data, total] = await Promise.all([

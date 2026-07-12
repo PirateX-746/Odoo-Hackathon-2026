@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +20,7 @@ import { EXPENSE_TYPE } from "@/libs/constant";
 import type { Expense, ExpenseInput, ExpenseType } from "@/types/expense";
 import type { Vehicle } from "@/types/vehicle";
 import { listAllVehicles } from "@/services/vehicleService";
+import { extractErrorMessage } from "@/libs/helper";
 
 const TYPE_OPTIONS = Object.values(EXPENSE_TYPE);
 const TYPE_LABELS: Record<string, string> = {
@@ -47,7 +49,9 @@ export function ExpenseForm({ defaultValues, submitLabel, onSubmit }: ExpenseFor
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
 
   useEffect(() => {
-    listAllVehicles().then(setVehicles);
+    listAllVehicles()
+      .then(setVehicles)
+      .catch((err) => toast.error(extractErrorMessage(err)));
   }, []);
 
   const {

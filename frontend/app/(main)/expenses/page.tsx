@@ -48,7 +48,9 @@ export default function ExpensesPage() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
 
   useEffect(() => {
-    listAllVehicles().then(setVehicles);
+    listAllVehicles()
+      .then(setVehicles)
+      .catch((err) => toast.error(extractErrorMessage(err)));
   }, []);
 
   const vehiclePlate = useCallback(

@@ -2,10 +2,22 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Truck, Wrench, AlertTriangle, Route, Sparkles } from "lucide-react";
+import { toast } from "sonner";
+import { formatDistanceToNowStrict } from "date-fns";
+import type { LucideIcon } from "lucide-react";
+import {
+  Truck,
+  Wrench,
+  AlertTriangle,
+  Route,
+  Sparkles,
+  CircleCheck,
+  Lightbulb,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { GaugeTile } from "@/app/_components/ui/GaugeTile";
 import { StatusBadge } from "@/app/_components/ui/StatusBadge";
+import { AiBadge } from "@/app/_components/ui/AiBadge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -52,15 +64,22 @@ export default function DashboardPage() {
       listAllVehicles(),
       listAllDrivers(),
       listAllTrips({ status: TRIP_STATUS.DISPATCHED }),
-    ]).then(([k, a, v, d, trips]) => {
-      if (!active) return;
-      setKpis(k);
-      setAlerts(a);
-      setVehicles(v);
-      setDrivers(d);
-      setDriverByVehicleId(Object.fromEntries(trips.map((t) => [t.vehicleId, t.driverId])));
-      setLoading(false);
-    });
+    ])
+      .then(([k, a, v, d, trips]) => {
+        if (!active) return;
+        setKpis(k);
+        setAlerts(a);
+        setVehicles(v);
+        setDrivers(d);
+        setDriverByVehicleId(Object.fromEntries(trips.map((t) => [t.vehicleId, t.driverId])));
+      })
+      .catch((err) => {
+        if (!active) return;
+        toast.error(err instanceof Error ? err.message : "Failed to load dashboard data.");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
     return () => {
       active = false;
     };
@@ -69,11 +88,18 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!canViewFleetAnalytics) return;
     let active = true;
-    getInsightsSummary().then((summary) => {
-      if (!active) return;
-      setInsights(summary);
-      setInsightsLoading(false);
-    });
+    getInsightsSummary()
+      .then((summary) => {
+        if (!active) return;
+        setInsights(summary);
+      })
+      .catch((err) => {
+        if (!active) return;
+        toast.error(err instanceof Error ? err.message : "Failed to load AI insights.");
+      })
+      .finally(() => {
+        if (active) setInsightsLoading(false);
+      });
     return () => {
       active = false;
     };
@@ -137,12 +163,20 @@ export default function DashboardPage() {
       )}
 
       {canViewFleetAnalytics && (
-        <Card>
+        <Card className="border-primary/20 from-primary/[0.04] bg-gradient-to-br to-transparent">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Sparkles className="text-primary size-4" />
+              <span className="bg-primary/10 text-primary flex size-6 items-center justify-center rounded-md">
+                <Sparkles className="size-3.5" />
+              </span>
               AI Insights Digest
+              <AiBadge />
             </CardTitle>
+            {insights && (
+              <p className="text-muted-foreground mt-0.5 text-xs">
+                Generated {formatDistanceToNowStrict(new Date(insights.generatedAt))} ago
+              </p>
+            )}
           </CardHeader>
           <CardContent>
             {insightsLoading ? (
@@ -154,10 +188,25 @@ export default function DashboardPage() {
             ) : insights ? (
               <div className="space-y-4">
                 <p className="text-foreground text-sm font-medium">{insights.headline}</p>
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <InsightList title="Highlights" items={insights.highlights} />
-                  <InsightList title="Risks" items={insights.risks} tone="critical" />
-                  <InsightList title="Recommendations" items={insights.recommendations} />
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <InsightList
+                    title="Highlights"
+                    items={insights.highlights}
+                    icon={CircleCheck}
+                    tone="ok"
+                  />
+                  <InsightList
+                    title="Risks"
+                    items={insights.risks}
+                    icon={AlertTriangle}
+                    tone="critical"
+                  />
+                  <InsightList
+                    title="Recommendations"
+                    items={insights.recommendations}
+                    icon={Lightbulb}
+                    tone="default"
+                  />
                 </div>
               </div>
             ) : (
@@ -266,29 +315,38 @@ export default function DashboardPage() {
   );
 }
 
+const INSIGHT_TONE_CLASS = {
+  ok: "text-signal-ok",
+  critical: "text-signal-critical",
+  default: "text-primary",
+} as const;
+
 function InsightList({
   title,
   items,
-  tone = "default",
+  icon: Icon,
+  tone,
 }: {
   title: string;
   items: string[];
-  tone?: "default" | "critical";
+  icon: LucideIcon;
+  tone: keyof typeof INSIGHT_TONE_CLASS;
 }) {
   return (
-    <div>
+    <div className="bg-muted/40 rounded-md p-3">
       <p
         className={cn(
-          "text-xs font-semibold uppercase",
-          tone === "critical" ? "text-signal-critical" : "text-muted-foreground",
+          "flex items-center gap-1.5 text-xs font-semibold uppercase",
+          INSIGHT_TONE_CLASS[tone],
         )}
       >
+        <Icon className="size-3.5" />
         {title}
       </p>
       {items.length === 0 ? (
-        <p className="text-muted-foreground mt-1 text-sm">None</p>
+        <p className="text-muted-foreground mt-2 text-sm">None</p>
       ) : (
-        <ul className="text-foreground mt-1 list-inside list-disc space-y-1 text-sm">
+        <ul className="text-foreground mt-2 list-inside list-disc space-y-1.5 text-sm">
           {items.map((item, i) => (
             <li key={i}>{item}</li>
           ))}

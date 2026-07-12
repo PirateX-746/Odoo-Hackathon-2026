@@ -1,7 +1,7 @@
 import { apiDelete, apiGet, apiPatch, apiPost } from "@/libs/api";
 import type { Driver, DriverInput, DriverStatus } from "@/types/driver";
 import type { ListParams } from "@/app/_hooks/usePaginatedList";
-import { emptyPage, type PaginatedResult } from "./types";
+import type { PaginatedResult } from "./types";
 
 export interface DriverListParams extends ListParams {
   status?: DriverStatus;

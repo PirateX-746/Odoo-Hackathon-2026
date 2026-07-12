@@ -17,9 +17,10 @@ export interface DashboardKpisParams {
   status?: string;
 }
 
-export async function getDashboardKpis(params: DashboardKpisParams = {}): Promise<DashboardKpis | null> {
+export async function getDashboardKpis(params: DashboardKpisParams = {}): Promise<DashboardKpis> {
   const res = await apiGet<DashboardKpis>("/dashboard/kpis", {
     params: params as Record<string, string | undefined>,
   });
+  if (!res.data) throw new Error(res.error ?? "Failed to load dashboard KPIs.");
   return res.data;
 }

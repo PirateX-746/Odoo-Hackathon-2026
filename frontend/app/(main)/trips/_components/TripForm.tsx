@@ -27,6 +27,8 @@ import {
 } from "@/services/dispatchService";
 import { useAuth } from "@/libs/auth";
 import { CAN_MANAGE_TRIPS } from "@/libs/constant";
+import { AiBadge } from "@/app/_components/ui/AiBadge";
+import { cn } from "@/lib/utils";
 
 const tripSchema = z.object({
   source: z.string().min(1, "Required"),
@@ -83,7 +85,12 @@ export function TripForm({ submitLabel, onSubmit }: TripFormProps) {
 
   const handleSuggest = async () => {
     const values = getValues();
-    if (!values.source || !values.destination || !values.cargoWeightKg || !values.plannedDistanceKm) {
+    if (
+      !values.source ||
+      !values.destination ||
+      !values.cargoWeightKg ||
+      !values.plannedDistanceKm
+    ) {
       toast.error("Fill in source, destination, cargo weight, and distance first.");
       return;
     }
@@ -115,40 +122,64 @@ export function TripForm({ submitLabel, onSubmit }: TripFormProps) {
 
   return (
     <form onSubmit={submit} className="space-y-6">
-      <p className="rounded-md border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-        Only vehicles and drivers currently available for dispatch are listed. The trip is
-        created as a draft — dispatch it from the trip list once ready.
+      <p className="border-border bg-muted/40 text-muted-foreground rounded-md border px-3 py-2 text-xs">
+        Only vehicles and drivers currently available for dispatch are listed. The trip is created
+        as a draft — dispatch it from the trip list once ready.
       </p>
 
       {canUseDispatchAssistant && (
-        <div className="rounded-md border border-border bg-muted/20 p-3">
+        <div className="border-primary/20 from-primary/[0.04] rounded-md border bg-gradient-to-br to-transparent p-3">
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5 text-sm font-medium text-foreground">
-              <Sparkles className="size-4 text-primary" />
+            <div className="text-foreground flex items-center gap-2 text-sm font-medium">
+              <span className="bg-primary/10 text-primary flex size-6 items-center justify-center rounded-md">
+                <Sparkles className="size-3.5" />
+              </span>
               Smart Dispatch Assistant
+              <AiBadge />
             </div>
-            <Button type="button" size="sm" variant="outline" onClick={handleSuggest} disabled={suggesting}>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={handleSuggest}
+              disabled={suggesting}
+            >
               {suggesting ? "Thinking…" : "Suggest vehicle & driver"}
             </Button>
           </div>
           {suggestion && (
-            <div className="mt-2 flex items-start justify-between gap-3 rounded-md bg-background p-2 text-sm">
-              <div className="min-w-0">
-                <p className="text-foreground">
-                  {vehicles.find((v) => v.id === suggestion.vehicleId)?.registrationNumber ??
-                    suggestion.vehicleId}
-                  {" · "}
-                  {drivers.find((d) => d.id === suggestion.driverId)?.name ?? suggestion.driverId}
-                </p>
-                <p className="mt-0.5 text-xs text-muted-foreground">{suggestion.rationale}</p>
-              </div>
-              <div className="flex shrink-0 items-center gap-2">
-                <span className="text-xs font-medium text-muted-foreground">
-                  {Math.round(suggestion.confidenceScore * 100)}% match
-                </span>
-                <Button type="button" size="sm" onClick={applySuggestion}>
+            <div className="bg-card border-border mt-3 rounded-md border p-3 text-sm">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-foreground font-medium">
+                    {vehicles.find((v) => v.id === suggestion.vehicleId)?.registrationNumber ??
+                      suggestion.vehicleId}
+                    {" · "}
+                    {drivers.find((d) => d.id === suggestion.driverId)?.name ?? suggestion.driverId}
+                  </p>
+                  <p className="text-muted-foreground mt-1 text-xs">{suggestion.rationale}</p>
+                </div>
+                <Button type="button" size="sm" className="shrink-0" onClick={applySuggestion}>
                   Apply
                 </Button>
+              </div>
+              <div className="mt-3 flex items-center gap-2">
+                <div className="bg-muted h-1.5 flex-1 overflow-hidden rounded-full">
+                  <div
+                    className={cn(
+                      "h-full rounded-full",
+                      suggestion.confidenceScore >= 0.7
+                        ? "bg-signal-ok"
+                        : suggestion.confidenceScore >= 0.4
+                          ? "bg-signal-warn"
+                          : "bg-signal-critical",
+                    )}
+                    style={{ width: `${Math.round(suggestion.confidenceScore * 100)}%` }}
+                  />
+                </div>
+                <span className="text-muted-foreground shrink-0 text-xs font-medium">
+                  {Math.round(suggestion.confidenceScore * 100)}% match
+                </span>
               </div>
             </div>
           )}
@@ -166,7 +197,7 @@ export function TripForm({ submitLabel, onSubmit }: TripFormProps) {
             {...register("source")}
           />
           {errors.source && (
-            <p id="source-error" className="text-xs text-destructive">
+            <p id="source-error" className="text-destructive text-xs">
               {errors.source.message}
             </p>
           )}
@@ -182,7 +213,7 @@ export function TripForm({ submitLabel, onSubmit }: TripFormProps) {
             {...register("destination")}
           />
           {errors.destination && (
-            <p id="destination-error" className="text-xs text-destructive">
+            <p id="destination-error" className="text-destructive text-xs">
               {errors.destination.message}
             </p>
           )}
@@ -219,7 +250,7 @@ export function TripForm({ submitLabel, onSubmit }: TripFormProps) {
             )}
           />
           {errors.vehicleId && (
-            <p id="vehicleId-error" className="text-xs text-destructive">
+            <p id="vehicleId-error" className="text-destructive text-xs">
               {errors.vehicleId.message}
             </p>
           )}
@@ -256,7 +287,7 @@ export function TripForm({ submitLabel, onSubmit }: TripFormProps) {
             )}
           />
           {errors.driverId && (
-            <p id="driverId-error" className="text-xs text-destructive">
+            <p id="driverId-error" className="text-destructive text-xs">
               {errors.driverId.message}
             </p>
           )}
@@ -273,7 +304,7 @@ export function TripForm({ submitLabel, onSubmit }: TripFormProps) {
             {...register("cargoWeightKg", { valueAsNumber: true })}
           />
           {errors.cargoWeightKg && (
-            <p id="cargoWeightKg-error" className="text-xs text-destructive">
+            <p id="cargoWeightKg-error" className="text-destructive text-xs">
               {errors.cargoWeightKg.message}
             </p>
           )}
@@ -290,7 +321,7 @@ export function TripForm({ submitLabel, onSubmit }: TripFormProps) {
             {...register("plannedDistanceKm", { valueAsNumber: true })}
           />
           {errors.plannedDistanceKm && (
-            <p id="plannedDistanceKm-error" className="text-xs text-destructive">
+            <p id="plannedDistanceKm-error" className="text-destructive text-xs">
               {errors.plannedDistanceKm.message}
             </p>
           )}
@@ -298,7 +329,10 @@ export function TripForm({ submitLabel, onSubmit }: TripFormProps) {
       </div>
 
       <div className="flex justify-end gap-2">
-        <Button type="submit" disabled={isSubmitting || vehicles.length === 0 || drivers.length === 0}>
+        <Button
+          type="submit"
+          disabled={isSubmitting || vehicles.length === 0 || drivers.length === 0}
+        >
           {isSubmitting ? "Saving…" : submitLabel}
         </Button>
       </div>
